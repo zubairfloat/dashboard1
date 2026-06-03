@@ -31,7 +31,7 @@ export default function LoginPage() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}/dashboard`,
+        redirectTo: "https://dashboard1-seven-pink.vercel.app/dashboard",
       },
     });
 
@@ -53,13 +53,9 @@ export default function LoginPage() {
             S
           </div>
 
-          <h1 className="text-4xl font-bold text-white">
-            Welcome Back
-          </h1>
+          <h1 className="text-4xl font-bold text-white">Welcome Back</h1>
 
-          <p className="mt-3 text-blue-100/70">
-            Login to your SaaS Dashboard
-          </p>
+          <p className="mt-3 text-blue-100/70">Login to your SaaS Dashboard</p>
         </div>
 
         {/* Form */}
@@ -79,7 +75,6 @@ export default function LoginPage() {
                 d="M43.6 20.5H42V20H24v8h11.3C33.6 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12S17.4 12 24 12c3 0 5.7 1.1 7.8 3l5.7-5.7C34.1 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.3-.4-3.5z"
               />
             </svg>
-
             Continue with Google
           </button>
 
@@ -110,9 +105,7 @@ export default function LoginPage() {
 
         {/* Footer */}
         <div className="mt-6 text-center text-sm">
-          <span className="text-blue-100/60">
-            Don't have an account?
-          </span>{" "}
+          <span className="text-blue-100/60">Don't have an account?</span>{" "}
           <Link
             href="/signup"
             className="font-semibold text-white hover:underline"
@@ -122,10 +115,7 @@ export default function LoginPage() {
         </div>
 
         <div className="mt-4 text-center text-sm">
-          <Link
-            href="/"
-            className="text-blue-100/60 hover:text-white"
-          >
+          <Link href="/" className="text-blue-100/60 hover:text-white">
             ← Back to Home
           </Link>
         </div>
