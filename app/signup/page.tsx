@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { supabase } from "@/lib/supabase/client";
 import Link from "next/link";
+import { supabase } from "@/lib/supabase/client";
 
 export default function SignupPage() {
   const [username, setUsername] = useState("");
@@ -40,6 +40,13 @@ export default function SignupPage() {
       return;
     }
 
+    if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+      setErrorMessage(
+        "Username can only contain letters, numbers and underscore."
+      );
+      return;
+    }
+
     if (password !== confirmPassword) {
       setErrorMessage("Passwords do not match.");
       return;
@@ -55,7 +62,7 @@ export default function SignupPage() {
     setLoading(true);
 
     try {
-      // Check if username already exists
+      // Check username already exists
       const { data: existingUsername } =
         await supabase
           .from("profiles")
@@ -71,7 +78,7 @@ export default function SignupPage() {
         return;
       }
 
-      const { error } =
+      const { data, error } =
         await supabase.auth.signUp({
           email,
           password,
@@ -79,28 +86,48 @@ export default function SignupPage() {
             data: {
               username,
             },
+            emailRedirectTo:
+              `${window.location.origin}/auth/confirmed`,
           },
         });
 
       if (error) {
-        if (
-          error.message
-            .toLowerCase()
-            .includes("already")
-        ) {
-          setErrorMessage(
-            "An account with this email already exists. Please login."
-          );
-        } else {
-          setErrorMessage(error.message);
-        }
-
+        setErrorMessage(error.message);
         setLoading(false);
         return;
       }
 
+      // Existing email check
+      if (
+        data.user &&
+        data.user.identities &&
+        data.user.identities.length === 0
+      ) {
+        setErrorMessage(
+          "An account with this email already exists. Please login instead."
+        );
+        setLoading(false);
+        return;
+      }
+
+      // Insert profile
+      if (data.user) {
+        const { error: profileError } =
+          await supabase
+            .from("profiles")
+            .upsert({
+              id: data.user.id,
+              username,
+              email,
+            });
+
+        if (profileError) {
+          console.error(profileError);
+        }
+      }
+
       setSuccessMessage(
-        "Account created successfully. Please check your email and verify your account."
+        "Account created successfully. Please check your email and click the verification link."
       );
 
       setUsername("");
