@@ -27,19 +27,18 @@ export default function LoginPage() {
     window.location.href = "/dashboard";
   };
 
-  const handleGoogleLogin = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: "https://dashboard1-seven-pink.vercel.app/dashboard",
-      },
-    });
+const handleGoogleLogin = async () => {
+  const { error } = await supabase.auth.signInWithOAuth({
+    provider: "google",
+    options: {
+      redirectTo: `${window.location.origin}/dashboard`,
+    },
+  });
 
-    if (error) {
-      alert(error.message);
-    }
-  };
-
+  if (error) {
+    alert(error.message);
+  }
+};
   return (
     <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-gradient-to-br from-blue-950 via-blue-900 to-indigo-900 px-4">
       {/* Background Glow */}

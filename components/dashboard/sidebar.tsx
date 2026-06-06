@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabase/client";
 import {
   LayoutDashboard,
   User,
@@ -9,7 +11,37 @@ import {
   Settings,
 } from "lucide-react";
 
+interface UserData {
+  email?: string;
+  user_metadata?: {
+    full_name?: string;
+    name?: string;
+  };
+}
+
 export default function Sidebar() {
+  const [user, setUser] = useState<UserData | null>(null);
+
+  useEffect(() => {
+    async function loadUser() {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      setUser(user as UserData);
+    }
+
+    loadUser();
+  }, []);
+
+  const userName =
+    user?.user_metadata?.full_name ||
+    user?.user_metadata?.name ||
+    user?.email?.split("@")[0] ||
+    "User";
+
+  const firstLetter = userName.charAt(0).toUpperCase();
+
   return (
     <aside
       className="
@@ -24,6 +56,8 @@ export default function Sidebar() {
         lg:border-r
         lg:sticky
         lg:top-0
+        lg:flex
+        lg:flex-col
       "
     >
       {/* Logo */}
@@ -45,7 +79,7 @@ export default function Sidebar() {
         </div>
       </div>
 
-      {/* Mobile Navigation */}
+      {/* Navigation */}
       <nav
         className="
           flex
@@ -53,6 +87,7 @@ export default function Sidebar() {
           overflow-x-auto
           p-3
 
+          lg:flex-1
           lg:flex-col
           lg:overflow-visible
           lg:p-4
@@ -100,20 +135,20 @@ export default function Sidebar() {
       </nav>
 
       {/* Desktop User Card */}
-      <div className="hidden lg:block">
-        <div className="absolute bottom-4 left-4 right-4 rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-xl">
+      <div className="hidden lg:block p-4">
+        <div className="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-xl">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white font-semibold text-blue-900">
-              Z
+              {firstLetter}
             </div>
 
-            <div>
-              <p className="text-sm font-medium text-white">
-                Zubair
+            <div className="min-w-0">
+              <p className="truncate text-sm font-medium text-white">
+                {userName}
               </p>
 
-              <p className="text-xs text-blue-100/60">
-                Administrator
+              <p className="truncate text-xs text-blue-100/60">
+                {user?.email}
               </p>
             </div>
           </div>

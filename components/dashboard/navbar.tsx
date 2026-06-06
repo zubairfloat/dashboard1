@@ -1,13 +1,44 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
 import { Bell, LogOut } from "lucide-react";
 
+interface UserData {
+  email?: string;
+  user_metadata?: {
+    full_name?: string;
+    name?: string;
+  };
+}
+
 export default function Navbar() {
+  const [user, setUser] = useState<UserData | null>(null);
+
+  useEffect(() => {
+    async function loadUser() {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      setUser(user as UserData);
+    }
+
+    loadUser();
+  }, []);
+
   const handleLogout = async () => {
     await supabase.auth.signOut();
     window.location.href = "/login";
   };
+
+  const userName =
+    user?.user_metadata?.full_name ||
+    user?.user_metadata?.name ||
+    user?.email?.split("@")[0] ||
+    "User";
+
+  const firstLetter = userName.charAt(0).toUpperCase();
 
   return (
     <header className="border-b border-white/10 bg-white/5 backdrop-blur-xl">
@@ -21,7 +52,7 @@ export default function Navbar() {
           <p className="text-blue-100/60">
             Welcome back,
             <span className="ml-1 font-medium text-white">
-              Zubair Rizwan
+              {userName}
             </span>
           </p>
         </div>
@@ -34,16 +65,16 @@ export default function Navbar() {
 
           <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-3 py-2">
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white font-semibold text-blue-900">
-              Z
+              {firstLetter}
             </div>
 
             <div className="hidden sm:block">
               <p className="text-sm font-medium text-white">
-                Zubair
+                {userName}
               </p>
 
               <p className="text-xs text-blue-100/60">
-                Admin
+                {user?.email}
               </p>
             </div>
           </div>
@@ -53,6 +84,7 @@ export default function Navbar() {
             className="flex items-center gap-2 rounded-2xl bg-red-500 px-4 py-3 text-white transition hover:bg-red-600"
           >
             <LogOut size={16} />
+
             <span className="hidden sm:inline">
               Logout
             </span>
