@@ -69,7 +69,7 @@ export default function Sidebar() {
 
           <div>
             <h2 className="font-bold text-white">
-              SaaS Dashboard
+              Axnetix Dashboard
             </h2>
 
             <p className="text-xs text-blue-100/60">

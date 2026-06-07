@@ -9,8 +9,8 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "SaaS Dashboard",
-  description: "Professional SaaS Management Platform",
+  title: "Axnetix Dashboard",
+  description: "Professional Axnetix Management Platform",
 };
 
 export default function RootLayout({

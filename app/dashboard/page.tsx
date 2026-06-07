@@ -30,7 +30,7 @@ export default function DashboardPage() {
         </h1>
 
         <p className="mt-2 text-blue-100/70">
-          Here's an overview of your SaaS platform.
+          Here's an overview of your Axnetix platform.
         </p>
       </div>
 

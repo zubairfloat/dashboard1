@@ -54,7 +54,7 @@ const handleGoogleLogin = async () => {
 
           <h1 className="text-4xl font-bold text-white">Welcome Back</h1>
 
-          <p className="mt-3 text-blue-100/70">Login to your SaaS Dashboard</p>
+          <p className="mt-3 text-blue-100/70">Login to your Axnetix Dashboard</p>
         </div>
 
         {/* Form */}

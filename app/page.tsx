@@ -7,7 +7,7 @@ export default function HomePage() {
       <nav className="border-b border-white/10 backdrop-blur-md">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5">
           <h1 className="text-2xl font-bold">
-            SaaS Dashboard 🚀
+            Axnetix Dashboard 🚀
           </h1>
 
           <div className="hidden gap-10 md:flex">
@@ -41,7 +41,7 @@ export default function HomePage() {
 
         <div className="relative mx-auto max-w-7xl px-6 py-32 text-center">
           <div className="mb-8 inline-flex rounded-full border border-white/20 px-5 py-2 text-sm backdrop-blur-md">
-            Modern SaaS Platform
+            Modern Axnetix Platform
           </div>
 
           <h1 className="text-6xl font-extrabold leading-tight md:text-8xl">
@@ -54,7 +54,7 @@ export default function HomePage() {
 
           <p className="mx-auto mt-8 max-w-3xl text-xl text-blue-100/80">
             Manage packages, subscriptions, tokens, users and
-            future SaaS modules from a single powerful platform.
+            future Axnetix modules from a single powerful platform.
           </p>
 
           <div className="mt-10 flex justify-center gap-4">
@@ -118,7 +118,7 @@ export default function HomePage() {
           </h2>
 
           <p className="mt-4 text-blue-100/70">
-            Built for modern SaaS businesses.
+            Built for modern Axnetix businesses.
           </p>
         </div>
 
@@ -157,7 +157,7 @@ export default function HomePage() {
 
       {/* Footer */}
       <footer className="border-t border-white/10 py-8 text-center text-sm text-blue-100/60">
-        © 2026 SaaS Dashboard. All rights reserved.
+        © 2026 Axnetix Dashboard. All rights reserved.
       </footer>
     </main>
   );

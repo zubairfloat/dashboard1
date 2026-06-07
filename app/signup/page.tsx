@@ -159,7 +159,7 @@ export default function SignupPage() {
           </h1>
 
           <p className="mt-2 text-blue-100/70">
-            Start your SaaS journey today
+            Start your Axnetix journey today
           </p>
         </div>
 
