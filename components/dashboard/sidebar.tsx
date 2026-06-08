@@ -19,8 +19,21 @@ interface UserData {
   };
 }
 
+interface ProfileData {
+  is_admin?: boolean;
+  is_approved?: boolean;
+  package_name?: string | null;
+  total_tokens?: number;
+  remaining_tokens?: number;
+}
+
 export default function Sidebar() {
-  const [user, setUser] = useState<UserData | null>(null);
+  const [user, setUser] = useState<UserData | null>(
+    null
+  );
+
+  const [profile, setProfile] =
+    useState<ProfileData | null>(null);
 
   useEffect(() => {
     async function loadUser() {
@@ -28,7 +41,28 @@ export default function Sidebar() {
         data: { user },
       } = await supabase.auth.getUser();
 
+      if (!user) return;
+
       setUser(user as UserData);
+
+      const { data: profileData } =
+        await supabase
+          .from("profiles")
+          .select(
+            `
+            is_admin,
+            is_approved,
+            package_name,
+            total_tokens,
+            remaining_tokens
+          `
+          )
+          .eq("id", user.id)
+          .single();
+
+      if (profileData) {
+        setProfile(profileData);
+      }
     }
 
     loadUser();
@@ -40,7 +74,19 @@ export default function Sidebar() {
     user?.email?.split("@")[0] ||
     "User";
 
-  const firstLetter = userName.charAt(0).toUpperCase();
+  const firstLetter =
+    userName.charAt(0).toUpperCase();
+
+  const isAdmin =
+    profile?.is_admin ?? false;
+
+  const hasPackage =
+    isAdmin ||
+    !!profile?.package_name;
+
+  const hasTokens =
+    isAdmin ||
+    (profile?.remaining_tokens ?? 0) > 0;
 
   return (
     <aside
@@ -64,7 +110,7 @@ export default function Sidebar() {
       <div className="border-b border-white/10 p-4 lg:p-6">
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white font-bold text-blue-900">
-            S
+            A
           </div>
 
           <div>
@@ -93,6 +139,7 @@ export default function Sidebar() {
           lg:p-4
         "
       >
+        {/* Dashboard */}
         <Link
           href="/dashboard"
           className="flex min-w-fit items-center gap-2 rounded-xl px-4 py-3 text-blue-100 transition hover:bg-white/10 hover:text-white"
@@ -101,6 +148,7 @@ export default function Sidebar() {
           Dashboard
         </Link>
 
+        {/* Profile */}
         <Link
           href="/dashboard/profile"
           className="flex min-w-fit items-center gap-2 rounded-xl px-4 py-3 text-blue-100 transition hover:bg-white/10 hover:text-white"
@@ -109,22 +157,57 @@ export default function Sidebar() {
           Profile
         </Link>
 
-        <Link
-          href="/dashboard/packages"
-          className="flex min-w-fit items-center gap-2 rounded-xl px-4 py-3 text-blue-100 transition hover:bg-white/10 hover:text-white"
+        {/* Packages */}
+        <div
+          title={
+            !hasPackage
+              ? "No package assigned yet"
+              : ""
+          }
         >
-          <Package size={18} />
-          Packages
-        </Link>
+          <Link
+            href={
+              hasPackage
+                ? "/dashboard/packages"
+                : "#"
+            }
+            className={`flex min-w-fit items-center gap-2 rounded-xl px-4 py-3 transition ${
+              hasPackage
+                ? "text-blue-100 hover:bg-white/10 hover:text-white"
+                : "pointer-events-none cursor-not-allowed text-blue-100/40"
+            }`}
+          >
+            <Package size={18} />
+            Packages
+          </Link>
+        </div>
 
-        <Link
-          href="/dashboard/tokens"
-          className="flex min-w-fit items-center gap-2 rounded-xl px-4 py-3 text-blue-100 transition hover:bg-white/10 hover:text-white"
+        {/* Tokens */}
+        <div
+          title={
+            !hasTokens
+              ? "No tokens assigned yet"
+              : ""
+          }
         >
-          <Coins size={18} />
-          Tokens
-        </Link>
+          <Link
+            href={
+              hasTokens
+                ? "/dashboard/tokens"
+                : "#"
+            }
+            className={`flex min-w-fit items-center gap-2 rounded-xl px-4 py-3 transition ${
+              hasTokens
+                ? "text-blue-100 hover:bg-white/10 hover:text-white"
+                : "pointer-events-none cursor-not-allowed text-blue-100/40"
+            }`}
+          >
+            <Coins size={18} />
+            Tokens
+          </Link>
+        </div>
 
+        {/* Settings */}
         <Link
           href="/dashboard/settings"
           className="flex min-w-fit items-center gap-2 rounded-xl px-4 py-3 text-blue-100 transition hover:bg-white/10 hover:text-white"
@@ -132,6 +215,16 @@ export default function Sidebar() {
           <Settings size={18} />
           Settings
         </Link>
+
+        {/* Super Admin */}
+        {isAdmin && (
+          <Link
+            href="/dashboard/admin"
+            className="flex min-w-fit items-center gap-2 rounded-xl bg-green-500/10 px-4 py-3 text-green-400 transition hover:bg-green-500/20"
+          >
+            👑 Admin Panel
+          </Link>
+        )}
       </nav>
 
       {/* Desktop User Card */}
@@ -150,6 +243,20 @@ export default function Sidebar() {
               <p className="truncate text-xs text-blue-100/60">
                 {user?.email}
               </p>
+
+              {isAdmin ? (
+                <p className="mt-1 text-xs font-semibold text-green-400">
+                  👑 Super Admin
+                </p>
+              ) : profile?.is_approved ? (
+                <p className="mt-1 text-xs font-semibold text-green-400">
+                  Approved User
+                </p>
+              ) : (
+                <p className="mt-1 text-xs font-semibold text-yellow-400">
+                  Pending Approval
+                </p>
+              )}
             </div>
           </div>
         </div>
