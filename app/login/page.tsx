@@ -5,7 +5,7 @@ import Link from "next/link";
 export default function LoginPage() {
   const handleLogin = () => {
     alert(
-      "Your account is currently under review. Login will be available after the 120-hour activation period."
+      "Your account is currently under review. Login access will become available after the 120-hour activation period has been completed and your account has been approved."
     );
   };
 
@@ -20,8 +20,8 @@ export default function LoginPage() {
       {/* Background Glow */}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(59,130,246,0.25),transparent_70%)]" />
 
-      {/* Login Card */}
-      <div className="relative z-10 w-full max-w-md rounded-3xl border border-white/10 bg-white/5 p-8 backdrop-blur-xl">
+      {/* Card */}
+      <div className="relative z-10 w-full max-w-lg rounded-3xl border border-white/10 bg-white/5 p-8 backdrop-blur-xl">
         {/* Logo */}
         <div className="mb-8 text-center">
           <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-white text-xl font-bold text-blue-900 shadow-lg">
@@ -37,45 +37,66 @@ export default function LoginPage() {
           </p>
         </div>
 
-        {/* Activation Notice */}
+        {/* Notice */}
         <div className="mb-6 rounded-2xl border border-amber-500/30 bg-amber-500/10 p-5 text-sm text-amber-100">
-          <h3 className="mb-3 font-semibold text-white">
+          <h3 className="mb-3 text-base font-semibold text-white">
             Registration Received
           </h3>
 
           <p>
-            Please note that your registration is subject
-            to a <strong>120-hour cooling-off period</strong>,
-            which begins once your email address has been
-            successfully verified.
+            Thank you for registering with Axnetix
+            Network. Your account is currently
+            undergoing a mandatory
+            <strong> 120-hour review and activation period</strong>.
           </p>
 
           <ul className="mt-4 list-disc space-y-2 pl-5">
             <li>
-              Your account information will be reviewed and
-              validated.
+              Your account information will be reviewed
+              and validated.
             </li>
 
             <li>
               Certain platform features may remain
               unavailable until full activation.
             </li>
+
+            <li>
+              Login access will remain disabled during
+              the review period.
+            </li>
           </ul>
 
           <p className="mt-4">
-            After the 120-hour cooling-off period concludes
-            and your account is approved, you will receive
-            a final confirmation email letting you know
-            your Axnetix Network account is fully active.
+            Once the 120-hour activation period has
+            concluded and your account has been approved,
+            you will receive a confirmation email
+            notifying you that your Axnetix Network
+            account is fully active and ready to use.
           </p>
 
           <p className="mt-4">
-            If you did not create an account with Axnetix
-            Network, please ignore this notice.
+            If you did not create an account with
+            Axnetix Network, please ignore this notice.
           </p>
+
+          <div className="mt-5 border-t border-amber-500/20 pt-4">
+            <p>
+              For assistance, please contact our support
+              team:
+            </p>
+
+            <p className="mt-2 font-medium">
+              Email: info@axnetix.com
+            </p>
+
+            <p className="font-medium">
+              Website: www.axnetix.com
+            </p>
+          </div>
         </div>
 
-        {/* Disabled Login Buttons */}
+        {/* Disabled Actions */}
         <div className="space-y-4">
           <button
             onClick={handleGoogleLogin}
@@ -88,7 +109,7 @@ export default function LoginPage() {
             onClick={handleLogin}
             className="w-full cursor-not-allowed rounded-xl bg-gray-500 p-3 font-semibold text-white opacity-70"
           >
-            Account Activation Pending
+            Account Under Review
           </button>
         </div>
 
