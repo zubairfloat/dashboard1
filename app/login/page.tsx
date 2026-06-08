@@ -5,7 +5,7 @@ import Link from "next/link";
 export default function LoginPage() {
   const handleLogin = () => {
     alert(
-      "Your account is currently under review. Login will be available after the 72-hour activation period."
+      "Your account is currently under review. Login will be available after the 120-hour activation period."
     );
   };
 
@@ -63,7 +63,7 @@ export default function LoginPage() {
           </ul>
 
           <p className="mt-4">
-            After the 72-hour cooling-off period concludes
+            After the 120-hour cooling-off period concludes
             and your account is approved, you will receive
             a final confirmation email letting you know
             your Axnetix Network account is fully active.
