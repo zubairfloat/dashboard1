@@ -45,7 +45,7 @@ export default function LoginPage() {
 
           <p>
             Please note that your registration is subject
-            to a <strong>72-hour cooling-off period</strong>,
+            to a <strong>120-hour cooling-off period</strong>,
             which begins once your email address has been
             successfully verified.
           </p>
