@@ -1,5 +1,6 @@
 "use client";
 
+import { supabase } from "@/lib/supabase/client";
 import { useEffect, useState } from "react";
 
 export default function PendingPage() {
@@ -8,54 +9,62 @@ export default function PendingPage() {
   const [timeLeft, setTimeLeft] = useState("");
 
   useEffect(() => {
-    const createdAt =
-      localStorage.getItem("signupTime") ||
-      new Date().toISOString();
+    const loadCountdown = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
 
-    localStorage.setItem("signupTime", createdAt);
+      if (!user) return;
 
-    const interval = setInterval(() => {
-      const signupDate = new Date(createdAt);
-      const now = new Date();
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("created_at,is_deleted")
+        .eq("id", user.id)
+        .single();
 
-      const endDate = new Date(
-        signupDate.getTime() +
-          TOTAL_HOURS * 60 * 60 * 1000
-      );
+      if (!profile) return;
 
-      const diff =
-        endDate.getTime() - now.getTime();
-
-      if (diff <= 0) {
-        setTimeLeft("Review period completed");
-        clearInterval(interval);
+      if (profile.is_deleted) {
+        window.location.href = "/dashboard/restricted";
         return;
       }
 
-      const days = Math.floor(
-        diff / (1000 * 60 * 60 * 24)
-      );
+      const createdAt = profile.created_at;
 
-      const hours = Math.floor(
-        (diff % (1000 * 60 * 60 * 24)) /
-          (1000 * 60 * 60)
-      );
+      const interval = setInterval(() => {
+        const signupDate = new Date(createdAt);
+        const now = new Date();
 
-      const minutes = Math.floor(
-        (diff % (1000 * 60 * 60)) /
-          (1000 * 60)
-      );
+        const endDate = new Date(
+          signupDate.getTime() + TOTAL_HOURS * 60 * 60 * 1000,
+        );
 
-      const seconds = Math.floor(
-        (diff % (1000 * 60)) / 1000
-      );
+        const diff = endDate.getTime() - now.getTime();
 
-      setTimeLeft(
-        `${days}d ${hours}h ${minutes}m ${seconds}s`
-      );
-    }, 1000);
+        if (diff <= 0) {
+          setTimeLeft("Please contact support at info@axnetix.com");
 
-    return () => clearInterval(interval);
+          clearInterval(interval);
+          return;
+        }
+
+        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+
+        const hours = Math.floor(
+          (diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60),
+        );
+
+        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+
+        const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+        setTimeLeft(`${days}d ${hours}h ${minutes}m ${seconds}s`);
+      }, 1000);
+
+      return () => clearInterval(interval);
+    };
+
+    loadCountdown();
   }, []);
 
   return (
@@ -70,8 +79,7 @@ export default function PendingPage() {
         </h1>
 
         <p className="mb-8 text-blue-100/70">
-          Your Axnetix Network account is
-          currently undergoing validation and
+          Your Axnetix Network account is currently undergoing validation and
           approval.
         </p>
 
@@ -80,32 +88,20 @@ export default function PendingPage() {
             Time Remaining
           </h2>
 
-          <div className="text-4xl font-bold text-amber-300">
-            {timeLeft}
-          </div>
+          <div className="text-4xl font-bold text-amber-300">{timeLeft}</div>
         </div>
 
         <div className="space-y-3 text-left text-blue-100/80">
-          <p>
-            • Your account information is being
-            reviewed.
-          </p>
+          <p>• Your account information is being reviewed.</p>
 
-          <p>
-            • Platform access remains restricted
-            until approval.
-          </p>
+          <p>• Platform access remains restricted until approval.</p>
 
-          <p>
-            • Once approved, you will receive a
-            confirmation email.
-          </p>
+          <p>• Once approved, you will receive a confirmation email.</p>
         </div>
 
         <div className="mt-8 rounded-xl border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-100">
-          If the countdown reaches zero and your
-          account is still not activated, please
-          contact the Axnetix support team.
+          If the countdown reaches zero and your account is still not activated,
+          please contact the Axnetix support team.
         </div>
       </div>
     </main>

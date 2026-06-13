@@ -36,8 +36,15 @@ export default function DashboardPage() {
         router.push("/dashboard/admin");
         return;
       }
+
+      // Restricted User
+      if (profile.is_deleted) {
+        router.push("/dashboard/restricted");
+        return;
+      }
+
       // Pending User
-      if (!profile.is_admin && !profile.is_approved) {
+      if (!profile.is_approved) {
         router.push("/dashboard/pending");
         return;
       }
