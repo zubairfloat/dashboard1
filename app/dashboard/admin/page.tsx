@@ -19,6 +19,10 @@ interface UserProfile {
   remaining_tokens: number;
 
   is_approved: boolean;
+  is_admin: boolean;
+  is_deleted: boolean;
+
+  approved_at?: string;
 }
 
 export default function AdminPage() {
@@ -26,12 +30,17 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(true);
 
   const loadUsers = async () => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("profiles")
       .select("*")
       .order("created_at", {
         ascending: false,
       });
+
+    if (error) {
+      console.error(error);
+      return;
+    }
     console.log(data);
 
     setUsers(data || []);
@@ -43,49 +52,41 @@ export default function AdminPage() {
     loadUsers();
   }, []);
 
-const approveUser = async (id: string) => {
-  const {
-    data: userProfile,
-    error: profileError,
-  } = await supabase
-    .from("profiles")
-    .select("email, username")
-    .eq("id", id)
-    .single();
+  const approveUser = async (id: string) => {
+    const { data: userProfile, error: profileError } = await supabase
+      .from("profiles")
+      .select("email, username")
+      .eq("id", id)
+      .single();
 
-  if (profileError || !userProfile) {
-    alert("User not found");
-    return;
-  }
+    if (profileError || !userProfile) {
+      alert("User not found");
+      return;
+    }
 
-  const { error } = await supabase
-    .from("profiles")
-    .update({
-      is_approved: true,
-      approved_at: new Date().toISOString(),
-    })
-    .eq("id", id);
+    const { error } = await supabase
+      .from("profiles")
+      .update({
+        is_approved: true,
+        approved_at: new Date().toISOString(),
+      })
+      .eq("id", id);
 
-  if (error) {
-    alert(error.message);
-    return;
-  }
+    if (error) {
+      alert(error.message);
+      return;
+    }
 
-  try {
-    await sendApprovalEmail(
-      userProfile.email,
-      userProfile.username
-    );
-  } catch (err) {
-    console.error(err);
-  }
+    try {
+      await sendApprovalEmail(userProfile.email, userProfile.username);
+    } catch (err) {
+      console.error(err);
+    }
 
-  alert(
-    `User approved successfully. Email sent to ${userProfile.email}`
-  );
+    alert(`User approved successfully. Email sent to ${userProfile.email}`);
 
-  loadUsers();
-};
+    loadUsers();
+  };
 
   const revokeUser = async (id: string) => {
     await supabase
@@ -134,7 +135,6 @@ const approveUser = async (id: string) => {
 
     loadUsers();
   };
-
 
   const totalUsers = users.length;
 
