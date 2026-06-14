@@ -7,6 +7,7 @@ export default function PendingPage() {
   const TOTAL_HOURS = 120;
 
   const [timeLeft, setTimeLeft] = useState("");
+  const [finalReview, setFinalReview] = useState(false);
 
   useEffect(() => {
     const loadCountdown = async () => {
@@ -42,9 +43,27 @@ export default function PendingPage() {
         const diff = endDate.getTime() - now.getTime();
 
         if (diff <= 0) {
-          setTimeLeft("Please contact support at info@axnetix.com");
+          setFinalReview(true);
 
-          clearInterval(interval);
+          const now = new Date();
+
+          const nextReview = new Date(
+            Math.ceil(now.getTime() / (24 * 60 * 60 * 1000)) *
+              (24 * 60 * 60 * 1000),
+          );
+
+          const finalDiff = nextReview.getTime() - now.getTime();
+
+          const hours = Math.floor(finalDiff / (1000 * 60 * 60));
+
+          const minutes = Math.floor(
+            (finalDiff % (1000 * 60 * 60)) / (1000 * 60),
+          );
+
+          const seconds = Math.floor((finalDiff % (1000 * 60)) / 1000);
+
+          setTimeLeft(`${hours}h ${minutes}m ${seconds}s`);
+
           return;
         }
 
@@ -85,11 +104,24 @@ export default function PendingPage() {
 
         <div className="mb-8 rounded-2xl border border-amber-500/30 bg-amber-500/10 p-6">
           <h2 className="mb-3 text-xl font-semibold text-white">
-            Time Remaining
+            {finalReview ? "Final Review Queue" : "Time Remaining"}
           </h2>
 
           <div className="text-4xl font-bold text-amber-300">{timeLeft}</div>
         </div>
+        {finalReview && (
+          <div className="mt-4 rounded-xl border border-blue-500/20 bg-blue-500/10 p-4 text-sm text-blue-100">
+            Your account is awaiting final administrative review.
+            <br />
+            <br />
+            Package assignments, token allocations, and account permissions are
+            currently being processed.
+            <br />
+            <br />
+            This review timer refreshes every 24 hours until your account has
+            been activated.
+          </div>
+        )}
 
         <div className="space-y-3 text-left text-blue-100/80">
           <p>• Your account information is being reviewed.</p>
