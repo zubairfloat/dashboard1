@@ -2,17 +2,23 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
+import Link from "next/link";
+import { sendApprovalEmail } from "@/lib/email/sendApprovalEmail";
 
 interface UserProfile {
   id: string;
   username: string;
   email: string;
-  is_admin: boolean;
-  is_approved: boolean;
-  is_deleted: boolean;
+
+  assigned_tokens: number;
+  bonus_tokens: number;
+  current_rate: number;
+  purchase_amount: number;
+
   total_tokens: number;
   remaining_tokens: number;
-  package_name: string | null;
+
+  is_approved: boolean;
 }
 
 export default function AdminPage() {
@@ -37,16 +43,49 @@ export default function AdminPage() {
     loadUsers();
   }, []);
 
-  const approveUser = async (id: string) => {
-    await supabase
-      .from("profiles")
-      .update({
-        is_approved: true,
-      })
-      .eq("id", id);
+const approveUser = async (id: string) => {
+  const {
+    data: userProfile,
+    error: profileError,
+  } = await supabase
+    .from("profiles")
+    .select("email, username")
+    .eq("id", id)
+    .single();
 
-    loadUsers();
-  };
+  if (profileError || !userProfile) {
+    alert("User not found");
+    return;
+  }
+
+  const { error } = await supabase
+    .from("profiles")
+    .update({
+      is_approved: true,
+      approved_at: new Date().toISOString(),
+    })
+    .eq("id", id);
+
+  if (error) {
+    alert(error.message);
+    return;
+  }
+
+  try {
+    await sendApprovalEmail(
+      userProfile.email,
+      userProfile.username
+    );
+  } catch (err) {
+    console.error(err);
+  }
+
+  alert(
+    `User approved successfully. Email sent to ${userProfile.email}`
+  );
+
+  loadUsers();
+};
 
   const revokeUser = async (id: string) => {
     await supabase
@@ -96,29 +135,6 @@ export default function AdminPage() {
     loadUsers();
   };
 
-  const assignTokens = async (
-    id: string,
-    totalTokens: number,
-    remainingTokens: number,
-  ) => {
-    const amount = prompt("How many tokens?");
-
-    if (!amount) return;
-
-    const tokens = parseInt(amount);
-
-    if (isNaN(tokens)) return;
-
-    await supabase
-      .from("profiles")
-      .update({
-        total_tokens: totalTokens + tokens,
-        remaining_tokens: remainingTokens + tokens,
-      })
-      .eq("id", id);
-
-    loadUsers();
-  };
 
   const totalUsers = users.length;
 
@@ -191,7 +207,7 @@ export default function AdminPage() {
                             {user.is_deleted ? (
                               <button
                                 onClick={() => restoreUser(user.id)}
-                              className="cursor-pointer rounded bg-purple-600 px-3 py-2 text-white transition hover:bg-purple-700 hover:scale-105"
+                                className="cursor-pointer rounded bg-purple-600 px-3 py-2 text-white transition hover:bg-purple-700 hover:scale-105"
                               >
                                 Restore
                               </button>
@@ -207,24 +223,18 @@ export default function AdminPage() {
                                 ) : (
                                   <button
                                     onClick={() => revokeUser(user.id)}
-                                    className="rounded bg-yellow-500 px-3 py-2 text-white"
+                                    className="cursor-pointer rounded bg-yellow-500 px-3 py-2 text-white"
                                   >
                                     Revoke
                                   </button>
                                 )}
 
-                                <button
-                                  onClick={() =>
-                                    assignTokens(
-                                      user.id,
-                                      user.total_tokens,
-                                      user.remaining_tokens,
-                                    )
-                                  }
+                                <Link
+                                  href={`/dashboard/admin/users/${user.id}/tokens`}
                                   className="cursor-pointer rounded bg-blue-500 px-3 py-2 text-white transition hover:bg-blue-600 hover:scale-105"
                                 >
                                   Tokens
-                                </button>
+                                </Link>
 
                                 <button
                                   onClick={() => deleteUser(user.id)}

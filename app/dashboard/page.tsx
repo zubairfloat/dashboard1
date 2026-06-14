@@ -9,6 +9,15 @@ export default function DashboardPage() {
 
   const [loading, setLoading] = useState(true);
 
+  const [profile, setProfile] = useState({
+    username: "",
+    assigned_tokens: 0,
+    bonus_tokens: 0,
+    total_tokens: 0,
+    remaining_tokens: 0,
+    current_rate: 0,
+  });
+
   useEffect(() => {
     const checkUser = async () => {
       const {
@@ -50,6 +59,14 @@ export default function DashboardPage() {
       }
 
       // Approved User
+      setProfile({
+        username: profile.username || "",
+        assigned_tokens: profile.assigned_tokens || 0,
+        bonus_tokens: profile.bonus_tokens || 0,
+        total_tokens: profile.total_tokens || 0,
+        remaining_tokens: profile.remaining_tokens || 0,
+        current_rate: profile.current_rate || 0,
+      });
       setLoading(false);
     };
 
@@ -70,7 +87,9 @@ export default function DashboardPage() {
     <div>
       {/* Header */}
       <div className="mb-10">
-        <h1 className="text-4xl font-bold text-white">Welcome Back 👋</h1>
+        <h1 className="text-4xl font-bold text-white">
+          Welcome Back, {profile.username} 👋
+        </h1>
 
         <p className="mt-2 text-blue-100/70">
           Here's an overview of your Axnetix platform.
@@ -81,24 +100,28 @@ export default function DashboardPage() {
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         <div className="rounded-3xl border border-white/10 bg-white/5 p-6 backdrop-blur-xl">
           <h3 className="text-sm font-medium text-blue-100/60">
-            Total Packages
+            Assigned Tokens
           </h3>
 
-          <p className="mt-3 text-4xl font-bold text-white">12</p>
+          <p className="mt-3 text-4xl font-bold text-white">
+            {profile.assigned_tokens.toLocaleString()}
+          </p>
         </div>
 
         <div className="rounded-3xl border border-white/10 bg-white/5 p-6 backdrop-blur-xl">
-          <h3 className="text-sm font-medium text-blue-100/60">
-            Active Packages
-          </h3>
+          <h3 className="text-sm font-medium text-blue-100/60">Bonus Tokens</h3>
 
-          <p className="mt-3 text-4xl font-bold text-white">8</p>
+          <p className="mt-3 text-4xl font-bold text-white">
+            {profile.bonus_tokens.toLocaleString()}
+          </p>
         </div>
 
         <div className="rounded-3xl border border-white/10 bg-white/5 p-6 backdrop-blur-xl">
           <h3 className="text-sm font-medium text-blue-100/60">Total Tokens</h3>
 
-          <p className="mt-3 text-4xl font-bold text-white">10,000</p>
+          <p className="mt-3 text-4xl font-bold text-white">
+            {profile.total_tokens.toLocaleString()}
+          </p>
         </div>
 
         <div className="rounded-3xl border border-white/10 bg-white/5 p-6 backdrop-blur-xl">
@@ -106,7 +129,33 @@ export default function DashboardPage() {
             Remaining Tokens
           </h3>
 
-          <p className="mt-3 text-4xl font-bold text-white">7,250</p>
+          <p className="mt-3 text-4xl font-bold text-white">
+            {profile.remaining_tokens.toLocaleString()}
+          </p>
+        </div>
+      </div>
+      {/* Token Info */}
+      <div className="mt-8 rounded-3xl border border-white/10 bg-white/5 p-8 backdrop-blur-xl">
+        <h2 className="mb-6 text-2xl font-semibold text-white">
+          Token Information
+        </h2>
+
+        <div className="grid gap-6 md:grid-cols-2">
+          <div>
+            <p className="text-blue-100/60">Current Rate</p>
+
+            <p className="mt-2 text-3xl font-bold text-white">
+              {profile.current_rate}
+            </p>
+          </div>
+
+          <div>
+            <p className="text-blue-100/60">Available Balance</p>
+
+            <p className="mt-2 text-3xl font-bold text-green-400">
+              {profile.remaining_tokens.toLocaleString()}
+            </p>
+          </div>
         </div>
       </div>
 
@@ -140,7 +189,10 @@ export default function DashboardPage() {
             Track usage and monitor token balances.
           </p>
 
-          <button className="rounded-xl bg-white px-5 py-3 font-medium text-blue-900">
+          <button
+            onClick={() => router.push("/dashboard/tokens")}
+            className="cursor-pointer rounded-xl bg-white px-5 py-3 font-medium text-blue-900"
+          >
             View Tokens
           </button>
         </div>

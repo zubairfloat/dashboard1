@@ -220,7 +220,7 @@ export default function SignupPage() {
           <button
             onClick={handleSignup}
             disabled={loading}
-            className="w-full rounded-xl bg-white py-3 font-semibold text-blue-900 transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+            className="cursor-pointer w-full rounded-xl bg-white py-3 font-semibold text-blue-900 transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {loading
               ? "Creating Account..."
