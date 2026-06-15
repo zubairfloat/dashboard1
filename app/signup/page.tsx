@@ -8,41 +8,31 @@ export default function SignupPage() {
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] =
-    useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
 
   const [loading, setLoading] = useState(false);
 
-  const [errorMessage, setErrorMessage] =
-    useState("");
+  const [errorMessage, setErrorMessage] = useState("");
 
-  const [successMessage, setSuccessMessage] =
-    useState("");
+  const [successMessage, setSuccessMessage] = useState("");
 
   const handleSignup = async () => {
     setErrorMessage("");
     setSuccessMessage("");
 
-    if (
-      !username.trim() ||
-      !email.trim() ||
-      !password ||
-      !confirmPassword
-    ) {
+    if (!username.trim() || !email.trim() || !password || !confirmPassword) {
       setErrorMessage("Please fill all fields.");
       return;
     }
 
     if (username.length < 3) {
-      setErrorMessage(
-        "Username must be at least 3 characters."
-      );
+      setErrorMessage("Username must be at least 3 characters.");
       return;
     }
 
     if (!/^[a-zA-Z0-9_]+$/.test(username)) {
       setErrorMessage(
-        "Username can only contain letters, numbers and underscore."
+        "Username can only contain letters, numbers and underscore.",
       );
       return;
     }
@@ -53,9 +43,7 @@ export default function SignupPage() {
     }
 
     if (password.length < 6) {
-      setErrorMessage(
-        "Password must be at least 6 characters."
-      );
+      setErrorMessage("Password must be at least 6 characters.");
       return;
     }
 
@@ -63,33 +51,30 @@ export default function SignupPage() {
 
     try {
       // Check username already exists
-      const { data: existingUsername } =
-        await supabase
-          .from("profiles")
-          .select("id")
-          .eq("username", username)
-          .maybeSingle();
+      const { data: existingUsername } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("username", username)
+        .maybeSingle();
 
       if (existingUsername) {
         setErrorMessage(
-          "Username already exists. Please choose another username."
+          "Username already exists. Please choose another username.",
         );
         setLoading(false);
         return;
       }
 
-      const { data, error } =
-        await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            data: {
-              username,
-            },
-            emailRedirectTo:
-              `${window.location.origin}/auth/confirmed`,
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            username,
           },
-        });
+          emailRedirectTo: `${window.location.origin}/auth/confirmed`,
+        },
+      });
 
       if (error) {
         setErrorMessage(error.message);
@@ -104,7 +89,7 @@ export default function SignupPage() {
         data.user.identities.length === 0
       ) {
         setErrorMessage(
-          "An account with this email already exists. Please login instead."
+          "An account with this email already exists. Please login instead.",
         );
         setLoading(false);
         return;
@@ -113,26 +98,17 @@ export default function SignupPage() {
 
       // Insert profile
       if (data.user) {
-        const { error: profileError } =
+        const { error: profileError } = await supabase.from("profiles").upsert({
+          id: data.user.id,
+          username,
+          email,
 
+          is_approved: false,
 
-await supabase
-  .from("profiles")
-  .upsert({
-    id: data.user.id,
-    username,
-    email,
-
-    is_approved: false,
-
-    approval_deadline: new Date(
-      Date.now() +
-        approvalHours *
-          60 *
-          60 *
-          1000
-    ).toISOString(),
-  });
+          approval_deadline: new Date(
+            Date.now() + approvalHours * 60 * 60 * 1000,
+          ).toISOString(),
+        });
 
         if (profileError) {
           console.error(profileError);
@@ -140,7 +116,7 @@ await supabase
       }
 
       setSuccessMessage(
-        "Account created successfully. Please check your email and click the verification link."
+        "Account created successfully. Please check your email and click the verification link.",
       );
 
       setUsername("");
@@ -150,9 +126,7 @@ await supabase
     } catch (err) {
       console.error(err);
 
-      setErrorMessage(
-        "Something went wrong. Please try again."
-      );
+      setErrorMessage("Something went wrong. Please try again.");
     }
 
     setLoading(false);
@@ -167,9 +141,7 @@ await supabase
             S
           </div>
 
-          <h1 className="text-4xl font-bold text-white">
-            Create Account
-          </h1>
+          <h1 className="text-4xl font-bold text-white">Create Account</h1>
 
           <p className="mt-2 text-blue-100/70">
             Start your Axnetix journey today
@@ -182,9 +154,7 @@ await supabase
             type="text"
             placeholder="Username"
             value={username}
-            onChange={(e) =>
-              setUsername(e.target.value)
-            }
+            onChange={(e) => setUsername(e.target.value)}
             className="w-full rounded-xl border border-white/10 bg-white/10 p-3 text-white placeholder:text-blue-100/50 outline-none"
           />
 
@@ -192,9 +162,7 @@ await supabase
             type="email"
             placeholder="Email Address"
             value={email}
-            onChange={(e) =>
-              setEmail(e.target.value)
-            }
+            onChange={(e) => setEmail(e.target.value)}
             className="w-full rounded-xl border border-white/10 bg-white/10 p-3 text-white placeholder:text-blue-100/50 outline-none"
           />
 
@@ -202,9 +170,7 @@ await supabase
             type="password"
             placeholder="Password"
             value={password}
-            onChange={(e) =>
-              setPassword(e.target.value)
-            }
+            onChange={(e) => setPassword(e.target.value)}
             className="w-full rounded-xl border border-white/10 bg-white/10 p-3 text-white placeholder:text-blue-100/50 outline-none"
           />
 
@@ -212,9 +178,7 @@ await supabase
             type="password"
             placeholder="Confirm Password"
             value={confirmPassword}
-            onChange={(e) =>
-              setConfirmPassword(e.target.value)
-            }
+            onChange={(e) => setConfirmPassword(e.target.value)}
             className="w-full rounded-xl border border-white/10 bg-white/10 p-3 text-white placeholder:text-blue-100/50 outline-none"
           />
 
@@ -235,9 +199,7 @@ await supabase
             disabled={loading}
             className="cursor-pointer w-full rounded-xl bg-white py-3 font-semibold text-blue-900 transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {loading
-              ? "Creating Account..."
-              : "Create Account"}
+            {loading ? "Creating Account..." : "Create Account"}
           </button>
         </div>
 
@@ -253,10 +215,7 @@ await supabase
         </div>
 
         <div className="mt-3 text-center text-sm">
-          <Link
-            href="/"
-            className="text-blue-100/70 hover:text-white"
-          >
+          <Link href="/" className="text-blue-100/70 hover:text-white">
             ← Back to Home
           </Link>
         </div>
