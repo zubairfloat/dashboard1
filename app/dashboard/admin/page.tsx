@@ -297,11 +297,12 @@ export default function AdminPage() {
               <table className="w-full text-left">
                 <thead>
                   <tr className="border-b border-white/10 text-blue-100/60">
-                    <th className="pb-4">Username</th>
-                    <th className="pb-4">Email</th>
-                    <th className="pb-4">Status</th>
-                    <th className="pb-4">Tokens</th>
-                    <th className="pb-4">Actions</th>
+                    <th>User</th>
+                    <th>Status</th>
+
+                    <th>Tokens</th>
+                    <th>Actions</th>
+                    <th>Approval Time</th>
                   </tr>
                 </thead>
 
@@ -313,9 +314,23 @@ export default function AdminPage() {
                         user.is_deleted ? "bg-red-500/10 opacity-60" : ""
                       }`}
                     >
-                      <td className="py-4 text-white">{user.username}</td>
+                      <td className="py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-600 font-bold text-white">
+                            {user.username?.charAt(0).toUpperCase()}
+                          </div>
 
-                      <td className="py-4 text-blue-100/70">{user.email}</td>
+                          <div>
+                            <p className="font-medium text-white">
+                              {user.username}
+                            </p>
+
+                            <p className="text-sm text-blue-100/60">
+                              {user.email}
+                            </p>
+                          </div>
+                        </div>
+                      </td>
 
                       <td className="py-4">
                         {user.is_deleted ? (
@@ -386,6 +401,16 @@ export default function AdminPage() {
                             </>
                           )}
                         </div>
+                      </td>
+                      <td className="py-4 text-white">
+                        {!user.is_approved && (
+                          <Link
+                            href={`/dashboard/admin/users/${user.id}/approval-time`}
+                            className="rounded bg-purple-600 px-3 py-2 text-white hover:bg-purple-700"
+                          >
+                            Approval Time
+                          </Link>
+                        )}
                       </td>
                     </tr>
                   ))}
@@ -482,6 +507,15 @@ export default function AdminPage() {
                           >
                             Disable
                           </button>
+
+                          {!user.is_approved && (
+                            <Link
+                              href={`/dashboard/admin/users/${user.id}/approval-time`}
+                              className="rounded bg-purple-600 px-3 py-2 text-white hover:bg-purple-700"
+                            >
+                              Approval Time
+                            </Link>
+                          )}
                         </>
                       )}
                     </div>

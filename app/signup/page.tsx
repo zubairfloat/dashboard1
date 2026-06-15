@@ -109,17 +109,30 @@ export default function SignupPage() {
         setLoading(false);
         return;
       }
+      const approvalHours = 120;
 
       // Insert profile
       if (data.user) {
         const { error: profileError } =
-          await supabase
-            .from("profiles")
-            .upsert({
-              id: data.user.id,
-              username,
-              email,
-            });
+
+
+await supabase
+  .from("profiles")
+  .upsert({
+    id: data.user.id,
+    username,
+    email,
+
+    is_approved: false,
+
+    approval_deadline: new Date(
+      Date.now() +
+        approvalHours *
+          60 *
+          60 *
+          1000
+    ).toISOString(),
+  });
 
         if (profileError) {
           console.error(profileError);
