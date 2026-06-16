@@ -7,9 +7,6 @@ export default function PendingPage() {
   const [timeLeft, setTimeLeft] =
     useState("");
 
-  const [finalReview, setFinalReview] =
-    useState(false);
-
   const [deadline, setDeadline] =
     useState("");
 
@@ -56,67 +53,28 @@ export default function PendingPage() {
 
     const interval =
       setInterval(() => {
-        const now =
-          new Date().getTime();
+        const cycleDuration =
+          72 * 60 * 60 * 1000; // 72 Hours
 
-        const endDate =
+        const originalDeadline =
           new Date(
             deadline
           ).getTime();
 
-        const diff =
-          endDate - now;
+        let nextDeadline =
+          originalDeadline;
 
-        // Admin deadline expired
-        if (diff <= 0) {
-          setFinalReview(true);
-
-          const nextReview =
-            new Date();
-
-          nextReview.setHours(
-            24,
-            0,
-            0,
-            0
-          );
-
-          const finalDiff =
-            nextReview.getTime() -
-            Date.now();
-
-          const hours =
-            Math.floor(
-              finalDiff /
-                (1000 *
-                  60 *
-                  60)
-            );
-
-          const minutes =
-            Math.floor(
-              (finalDiff %
-                (1000 *
-                  60 *
-                  60)) /
-                (1000 * 60)
-            );
-
-          const seconds =
-            Math.floor(
-              (finalDiff %
-                (1000 * 60)) /
-                1000
-            );
-
-          setTimeLeft(
-            `${hours}h ${minutes}m ${seconds}s`
-          );
-
-          return;
+        while (
+          nextDeadline <
+          Date.now()
+        ) {
+          nextDeadline +=
+            cycleDuration;
         }
 
-        setFinalReview(false);
+        const diff =
+          nextDeadline -
+          Date.now();
 
         const days =
           Math.floor(
@@ -176,17 +134,15 @@ export default function PendingPage() {
         </h1>
 
         <p className="mb-8 text-blue-100/70">
-          Your Axnetix Network
-          account is currently
-          undergoing validation
-          and approval.
+          Your Axnetix account is
+          currently undergoing
+          verification and
+          approval.
         </p>
 
         <div className="mb-8 rounded-2xl border border-amber-500/30 bg-amber-500/10 p-6">
           <h2 className="mb-3 text-xl font-semibold text-white">
-            {finalReview
-              ? "Final Review Queue"
-              : "Approval Countdown"}
+            Approval Countdown
           </h2>
 
           <div className="text-4xl font-bold text-amber-300">
@@ -194,29 +150,20 @@ export default function PendingPage() {
           </div>
         </div>
 
-        {finalReview && (
-          <div className="mt-4 rounded-xl border border-blue-500/20 bg-blue-500/10 p-4 text-sm text-blue-100">
-            Your account is
-            awaiting final
-            administrative review.
-            <br />
-            <br />
-            Package assignments,
-            token allocations and
-            account permissions
-            are currently being
-            processed.
-            <br />
-            <br />
-            This review timer
-            refreshes every 24
-            hours until your
-            account has been
-            activated.
-          </div>
-        )}
+        <div className="rounded-xl border border-blue-500/20 bg-blue-500/10 p-5 text-sm text-blue-100">
+          Your account is waiting
+          for administrator
+          approval.
+          <br />
+          <br />
+          Once approved, you will
+          receive a confirmation
+          email and gain access
+          to all platform
+          features.
+        </div>
 
-        <div className="space-y-3 text-left text-blue-100/80">
+        <div className="mt-8 space-y-3 text-left text-blue-100/80">
           <p>
             • Your account
             information is being
@@ -230,19 +177,25 @@ export default function PendingPage() {
           </p>
 
           <p>
-            • Once approved, you
-            will receive a
-            confirmation email.
+            • Token allocation
+            and package setup
+            will be completed
+            after approval.
+          </p>
+
+          <p>
+            • You will receive an
+            email notification
+            once your account is
+            approved.
           </p>
         </div>
 
         <div className="mt-8 rounded-xl border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-100">
-          If the countdown
-          reaches zero and your
-          account is still not
-          activated, please
-          contact the Axnetix
-          support team.
+          If your account remains
+          pending for an extended
+          period, please contact
+          Axnetix Support.
         </div>
       </div>
     </main>
