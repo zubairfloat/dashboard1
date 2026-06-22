@@ -69,7 +69,7 @@ export async function POST(request: Request) {
   "
 >
   <a
-    href="https://dashboard1-seven-pink.vercel.app/login"
+    href="https://axnetix-dashboard.vercel.app/login"
     style="
       background:#2563eb;
       color:white;
