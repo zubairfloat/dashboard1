@@ -1,53 +1,67 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase/client";
-import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
 import { sendApprovalEmail } from "@/lib/email/sendApprovalEmail";
+import { supabase } from "@/lib/supabase/client";
+import {
+  ActionButton,
+  LoadingCard,
+  StatCard,
+  StatusBadge,
+  UserAvatar,
+} from "@/components/dashboard/ui";
+import {
+  CheckCircle2,
+  Clock3,
+  Search,
+  ShieldCheck,
+  Users,
+} from "lucide-react";
 
 interface UserProfile {
   id: string;
-  username: string;
-  email: string;
-
-  assigned_tokens: number;
-  bonus_tokens: number;
-  current_rate: number;
-  purchase_amount: number;
-
-  total_tokens: number;
-  remaining_tokens: number;
-
-  is_approved: boolean;
-  is_admin: boolean;
-  is_deleted: boolean;
-
-  approved_at?: string;
+  username: string | null;
+  email: string | null;
+  assigned_tokens: number | null;
+  bonus_tokens: number | null;
+  current_rate: number | null;
+  purchase_amount: number | null;
+  total_tokens: number | null;
+  remaining_tokens: number | null;
+  is_approved: boolean | null;
+  is_admin: boolean | null;
+  is_deleted: boolean | null;
+  approved_at?: string | null;
+  approval_deadline?: string | null;
 }
+
+const PAGE_SIZE = 10;
 
 export default function AdminPage() {
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(true);
-
+  const [message, setMessage] = useState("");
   const [stats, setStats] = useState({
     total: 0,
     pending: 0,
     approved: 0,
     admins: 0,
   });
-
-  const PAGE_SIZE = 10;
-
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
   const [statusFilter, setStatusFilter] = useState("all");
 
+  const totalPages = useMemo(
+    () => Math.max(1, Math.ceil(totalCount / PAGE_SIZE)),
+    [totalCount],
+  );
+
   const loadUsers = async () => {
     setLoading(true);
+    setMessage("");
 
     const from = (page - 1) * PAGE_SIZE;
-
     const to = from + PAGE_SIZE - 1;
 
     let query = supabase.from("profiles").select("*", {
@@ -55,15 +69,16 @@ export default function AdminPage() {
     });
 
     if (search.trim()) {
-      query = query.or(`username.ilike.%${search}%,email.ilike.%${search}%`);
+      const value = search.trim().replaceAll(",", " ");
+      query = query.or(`username.ilike.%${value}%,email.ilike.%${value}%`);
     }
 
     if (statusFilter === "approved") {
-      query = query.eq("is_approved", true);
+      query = query.eq("is_approved", true).eq("is_deleted", false);
     }
 
     if (statusFilter === "pending") {
-      query = query.eq("is_approved", false);
+      query = query.eq("is_approved", false).eq("is_deleted", false);
     }
 
     if (statusFilter === "disabled") {
@@ -71,13 +86,11 @@ export default function AdminPage() {
     }
 
     const { data, error, count } = await query
-      .order("created_at", {
-        ascending: false,
-      })
+      .order("created_at", { ascending: false })
       .range(from, to);
 
     if (error) {
-      console.error(error);
+      setMessage(error.message);
       setLoading(false);
       return;
     }
@@ -87,29 +100,56 @@ export default function AdminPage() {
     setLoading(false);
   };
 
+  const loadStats = async () => {
+    const { data, error } = await supabase.from("profiles").select(`
+      is_approved,
+      is_admin,
+      is_deleted
+    `);
+
+    if (error) {
+      setMessage(error.message);
+      return;
+    }
+
+    setStats({
+      total: data?.length || 0,
+      approved: data?.filter((u) => u.is_approved && !u.is_deleted).length || 0,
+      pending: data?.filter((u) => !u.is_approved && !u.is_deleted).length || 0,
+      admins: data?.filter((u) => u.is_admin).length || 0,
+    });
+  };
+
   useEffect(() => {
     const timer = setTimeout(() => {
       loadUsers();
-    }, 400);
+    }, 350);
 
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, search, statusFilter]);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/immutability
     loadStats();
   }, []);
 
   const approveUser = async (id: string) => {
     const { data: userProfile, error: profileError } = await supabase
       .from("profiles")
-      .select("email, username")
+      .select("email, username, assigned_tokens, total_tokens")
       .eq("id", id)
       .single();
 
     if (profileError || !userProfile) {
-      alert("User not found");
+      setMessage("User not found.");
+      return;
+    }
+
+    if (
+      Number(userProfile.assigned_tokens || 0) <= 0 ||
+      Number(userProfile.total_tokens || 0) <= 0
+    ) {
+      setMessage("Assign tokens before approving this user.");
       return;
     }
 
@@ -122,37 +162,43 @@ export default function AdminPage() {
       .eq("id", id);
 
     if (error) {
-      alert(error.message);
+      setMessage(error.message);
       return;
     }
 
     try {
-      await sendApprovalEmail(userProfile.email, userProfile.username);
+      await sendApprovalEmail(
+        userProfile.email || "",
+        userProfile.username || "User",
+      );
+      setMessage(`User approved. Email sent to ${userProfile.email}.`);
     } catch (err) {
       console.error(err);
+      setMessage("User approved, but the approval email could not be sent.");
     }
-
-    alert(`User approved successfully. Email sent to ${userProfile.email}`);
 
     await loadUsers();
     await loadStats();
   };
 
   const revokeUser = async (id: string) => {
-    await supabase
+    const { error } = await supabase
       .from("profiles")
-      .update({
-        is_approved: false,
-      })
+      .update({ is_approved: false })
       .eq("id", id);
 
+    if (error) {
+      setMessage(error.message);
+      return;
+    }
+
+    setMessage("User approval revoked.");
     await loadUsers();
     await loadStats();
   };
 
   const deleteUser = async (id: string) => {
     const confirmed = window.confirm("Disable this user?");
-
     if (!confirmed) return;
 
     const { error } = await supabase
@@ -164,10 +210,11 @@ export default function AdminPage() {
       .eq("id", id);
 
     if (error) {
-      alert(error.message);
+      setMessage(error.message);
       return;
     }
 
+    setMessage("User disabled.");
     await loadUsers();
     await loadStats();
   };
@@ -175,242 +222,158 @@ export default function AdminPage() {
   const restoreUser = async (id: string) => {
     const { error } = await supabase
       .from("profiles")
-      .update({
-        is_deleted: false,
-      })
+      .update({ is_deleted: false })
       .eq("id", id);
 
     if (error) {
-      alert(error.message);
+      setMessage(error.message);
       return;
     }
 
+    setMessage("User restored.");
     await loadUsers();
     await loadStats();
   };
 
-  const loadStats = async () => {
-    const { data, error } = await supabase.from("profiles").select(`
-        is_approved,
-        is_admin,
-        is_deleted
-      `);
-
-    if (error) {
-      console.error(error);
-      return;
-    }
-
-    const total = data?.length || 0;
-
-    const approved =
-      data?.filter((u) => u.is_approved && !u.is_deleted).length || 0;
-
-    const pending =
-      data?.filter((u) => !u.is_approved && !u.is_deleted).length || 0;
-
-    const admins = data?.filter((u) => u.is_admin).length || 0;
-
-    setStats({
-      total,
-      pending,
-      approved,
-      admins,
-    });
-  };
-
-  const totalUsers = totalCount;
-
-  const pendingUsers = users.filter((u) => !u.is_approved).length;
-
-  const approvedUsers = users.filter((u) => u.is_approved).length;
-
-  const adminUsers = users.filter((u) => u.is_admin).length;
-
   return (
-    <div>
-      <div className="mb-10">
-        <h1 className="text-5xl font-bold text-white">Super Admin Dashboard</h1>
-
-        <p className="mt-2 text-blue-100/70">
-          Manage users, approvals and tokens
-        </p>
+    <div className="space-y-8">
+      <div className="flex flex-col gap-5 rounded-2xl border border-white/10 bg-white/[0.07] p-6 shadow-2xl shadow-blue-950/20 backdrop-blur-xl md:p-8 lg:flex-row lg:items-end lg:justify-between">
+        <div>
+          <StatusBadge status="admin" label="Super admin" />
+          <h1 className="mt-4 text-3xl font-bold text-white md:text-5xl">
+            User Management
+          </h1>
+          <p className="mt-2 max-w-2xl text-blue-100/70">
+            Review accounts, manage approval state, assign tokens, and keep the
+            approval workflow moving.
+          </p>
+        </div>
+        <div className="text-sm text-blue-100/60">
+          Showing {users.length} of {totalCount} users
+        </div>
       </div>
 
-      {/* Stats */}
-
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        <StatCard title="Total Users" value={stats.total} />
-
-        <StatCard title="Pending Users" value={stats.pending} />
-
-        <StatCard title="Approved Users" value={stats.approved} />
-
-        <StatCard title="Admins" value={stats.admins} />
-      </div>
-
-      {/* Users Search */}
-
-      <div className="mt-8 mb-6 flex flex-col gap-4 md:flex-row">
-        <input
-          type="text"
-          placeholder="Search by username or email..."
-          value={search}
-          onChange={(e) => {
-            setPage(1);
-            setSearch(e.target.value);
-          }}
-          className="flex-1 rounded-xl border border-white/10 bg-white/5 p-3 text-white placeholder:text-blue-100/40"
+      <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+        <StatCard title="Total Users" value={stats.total} icon={Users} />
+        <StatCard
+          title="Pending Users"
+          value={stats.pending}
+          icon={Clock3}
+          tone="amber"
         />
-
-        <select
-          value={statusFilter}
-          onChange={(e) => {
-            setPage(1);
-            setStatusFilter(e.target.value);
-          }}
-          className="rounded-xl border border-white/10 bg-white/5 p-3 text-white"
-        >
-          <option value="all">All Users</option>
-
-          <option value="approved">Approved</option>
-
-          <option value="pending">Pending</option>
-
-          <option value="disabled">Disabled</option>
-        </select>
+        <StatCard
+          title="Approved Users"
+          value={stats.approved}
+          icon={CheckCircle2}
+          tone="green"
+        />
+        <StatCard
+          title="Admins"
+          value={stats.admins}
+          icon={ShieldCheck}
+          tone="violet"
+        />
       </div>
 
-      {/* Users Table */}
+      <section className="rounded-2xl border border-white/10 bg-white/[0.07] p-5 shadow-2xl shadow-blue-950/20 backdrop-blur-xl">
+        <div className="grid gap-3 md:grid-cols-[1fr_220px]">
+          <label className="relative">
+            <Search
+              size={18}
+              className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-blue-100/45"
+            />
+            <input
+              type="text"
+              placeholder="Search by username or email..."
+              value={search}
+              onChange={(e) => {
+                setPage(1);
+                setSearch(e.target.value);
+              }}
+              className="h-12 w-full rounded-xl border border-white/10 bg-white/5 pl-11 pr-4 text-white placeholder:text-blue-100/40 outline-none transition focus:border-blue-300/60 focus:bg-white/10"
+            />
+          </label>
 
-      <div className="mt-8 rounded-3xl border border-white/10 bg-white/5 p-8">
-        <h2 className="mb-6 text-2xl font-semibold text-white">
-          User Management
-        </h2>
+          <select
+            value={statusFilter}
+            onChange={(e) => {
+              setPage(1);
+              setStatusFilter(e.target.value);
+            }}
+            className="h-12 rounded-xl border border-white/10 bg-blue-950/80 px-4 text-white outline-none transition focus:border-blue-300/60"
+          >
+            <option value="all">All Users</option>
+            <option value="approved">Approved</option>
+            <option value="pending">Pending</option>
+            <option value="disabled">Disabled</option>
+          </select>
+        </div>
+
+        {message && (
+          <div className="mt-4 rounded-xl border border-blue-300/20 bg-blue-400/10 p-3 text-sm text-blue-100">
+            {message}
+          </div>
+        )}
+      </section>
+
+      <section className="rounded-2xl border border-white/10 bg-white/[0.07] shadow-2xl shadow-blue-950/20 backdrop-blur-xl">
+        <div className="border-b border-white/10 p-5">
+          <h2 className="text-xl font-semibold text-white">Accounts</h2>
+          <p className="mt-1 text-sm text-blue-100/60">
+            Approval status, token balance, and account controls.
+          </p>
+        </div>
 
         {loading ? (
-          <p className="text-white">Loading...</p>
+          <LoadingCard label="Loading users..." />
+        ) : users.length === 0 ? (
+          <div className="p-8 text-center text-blue-100/60">
+            No users match the current filters.
+          </div>
         ) : (
           <>
-            {/* Desktop Table */}
-            <div className="hidden md:block overflow-auto">
+            <div className="hidden overflow-x-auto lg:block">
               <table className="w-full text-left">
                 <thead>
-                  <tr className="border-b border-white/10 text-blue-100/60">
-                    <th>User</th>
-                    <th>Status</th>
-
-                    <th>Tokens</th>
-                    <th>Actions</th>
-                    <th>Approval Time</th>
+                  <tr className="border-b border-white/10 text-xs uppercase text-blue-100/50">
+                    <th className="px-5 py-4 font-semibold">User</th>
+                    <th className="px-5 py-4 font-semibold">Status</th>
+                    <th className="px-5 py-4 font-semibold">Tokens</th>
+                    <th className="px-5 py-4 font-semibold">Approval Time</th>
+                    <th className="px-5 py-4 font-semibold">Actions</th>
                   </tr>
                 </thead>
-
                 <tbody>
                   {users.map((user) => (
                     <tr
                       key={user.id}
-                      className={`border-b border-white/5 ${
-                        user.is_deleted ? "bg-red-500/10 opacity-60" : ""
-                      }`}
+                      className="border-b border-white/5 transition hover:bg-white/[0.04]"
                     >
-                      <td className="py-4">
-                        <div className="flex items-center gap-3">
-                          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-600 font-bold text-white">
-                            {user.username?.charAt(0).toUpperCase()}
-                          </div>
-
-                          <div>
-                            <p className="font-medium text-white">
-                              {user.username}
-                            </p>
-
-                            <p className="text-sm text-blue-100/60">
-                              {user.email}
-                            </p>
-                          </div>
-                        </div>
+                      <td className="px-5 py-4">
+                        <UserIdentity user={user} />
                       </td>
-
-                      <td className="py-4">
-                        {user.is_deleted ? (
-                          <span className="rounded-full bg-red-500/20 px-3 py-1 text-xs text-red-300">
-                            Disabled
-                          </span>
-                        ) : user.is_approved ? (
-                          <span className="rounded-full bg-green-500/20 px-3 py-1 text-xs text-green-300">
-                            Approved
-                          </span>
-                        ) : (
-                          <span className="rounded-full bg-yellow-500/20 px-3 py-1 text-xs text-yellow-300">
-                            Pending
-                          </span>
-                        )}
+                      <td className="px-5 py-4">
+                        <UserStatus user={user} />
                       </td>
-
-                      <td className="py-4 text-white">
-                        {user.remaining_tokens}
+                      <td className="px-5 py-4 text-white">
+                        <p className="font-semibold">
+                          {Number(user.remaining_tokens || 0).toLocaleString()}
+                        </p>
+                        <p className="text-xs text-blue-100/50">
+                          of {Number(user.total_tokens || 0).toLocaleString()}
+                        </p>
                       </td>
-
-                      <td className="py-4">
-                        <div className="flex flex-wrap gap-2">
-                          {!user.is_admin && (
-                            <>
-                              {user.is_deleted ? (
-                                <button
-                                  onClick={() => restoreUser(user.id)}
-                                  className="cursor-pointer rounded bg-purple-600 px-3 py-2 text-white"
-                                >
-                                  Restore
-                                </button>
-                              ) : (
-                                <>
-                                  {!user.is_approved && (
-                                    <button
-                                      onClick={() => approveUser(user.id)}
-                                      className="cursor-pointer rounded bg-green-500 px-3 py-2 text-white"
-                                    >
-                                      Approve
-                                    </button>
-                                  )}
-
-                                  {user.is_approved && (
-                                    <button
-                                      onClick={() => revokeUser(user.id)}
-                                      className="cursor-pointer rounded bg-yellow-500 px-3 py-2 text-white"
-                                    >
-                                      Revoke
-                                    </button>
-                                  )}
-
-                                  <Link
-                                    href={`/dashboard/admin/users/${user.id}/tokens`}
-                                    className="cursor-pointer rounded bg-blue-500 px-3 py-2 text-white"
-                                  >
-                                    Tokens
-                                  </Link>
-
-                                  <button
-                                    onClick={() => deleteUser(user.id)}
-                                    className="cursor-pointer rounded bg-red-600 px-3 py-2 text-white"
-                                  >
-                                    Disable
-                                  </button>
-                                </>
-                              )}
-                            </>
-                          )}
-                        </div>
+                      <td className="px-5 py-4 text-sm text-blue-100/70">
+                        {formatDeadline(user.approval_deadline)}
                       </td>
-                      <td className="py-4 text-white">
-                        {!user.is_approved && (
-                          <Link
-                            href={`/dashboard/admin/users/${user.id}/approval-time`}
-                            className="rounded bg-purple-600 px-3 py-2 text-white hover:bg-purple-700"
-                          >
-                            Approval Time
-                          </Link>
-                        )}
+                      <td className="px-5 py-4">
+                        <UserActions
+                          user={user}
+                          approveUser={approveUser}
+                          revokeUser={revokeUser}
+                          deleteUser={deleteUser}
+                          restoreUser={restoreUser}
+                        />
                       </td>
                     </tr>
                   ))}
@@ -418,147 +381,155 @@ export default function AdminPage() {
               </table>
             </div>
 
-            {/* Mobile Cards */}
-            <div className="space-y-4 md:hidden">
+            <div className="space-y-4 p-4 lg:hidden">
               {users.map((user) => (
-                <div
+                <article
                   key={user.id}
-                  className={`rounded-2xl border p-4 ${
-                    user.is_deleted
-                      ? "border-red-500/20 bg-red-500/10"
-                      : "border-white/10 bg-white/5"
-                  }`}
+                  className="rounded-2xl border border-white/10 bg-white/5 p-4"
                 >
-                  <div className="flex items-start justify-between">
+                  <div className="flex items-start justify-between gap-3">
+                    <UserIdentity user={user} />
+                    <UserStatus user={user} />
+                  </div>
+                  <div className="mt-4 grid grid-cols-2 gap-3 rounded-xl border border-white/10 bg-white/5 p-3 text-sm">
                     <div>
-                      <h3 className="font-semibold text-white">
-                        {user.username}
-                      </h3>
-
-                      <p className="mt-1 break-all text-sm text-blue-100/70">
-                        {user.email}
+                      <p className="text-blue-100/50">Remaining</p>
+                      <p className="mt-1 font-semibold text-white">
+                        {Number(user.remaining_tokens || 0).toLocaleString()}
                       </p>
                     </div>
-
-                    {user.is_deleted ? (
-                      <span className="rounded-full bg-red-500/20 px-2 py-1 text-xs text-red-300">
-                        Disabled
-                      </span>
-                    ) : user.is_approved ? (
-                      <span className="rounded-full bg-green-500/20 px-2 py-1 text-xs text-green-300">
-                        Approved
-                      </span>
-                    ) : (
-                      <span className="rounded-full bg-yellow-500/20 px-2 py-1 text-xs text-yellow-300">
-                        Pending
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="mt-4 flex items-center justify-between">
-                    <span className="text-sm text-blue-100/60">
-                      Remaining Tokens
-                    </span>
-
-                    <span className="font-semibold text-white">
-                      {user.remaining_tokens}
-                    </span>
-                  </div>
-
-                  {!user.is_admin && (
-                    <div className="mt-4 grid grid-cols-2 gap-2">
-                      {user.is_deleted ? (
-                        <button
-                          onClick={() => restoreUser(user.id)}
-                          className="rounded-lg bg-purple-600 px-3 py-2 text-sm text-white"
-                        >
-                          Restore
-                        </button>
-                      ) : (
-                        <>
-                          {!user.is_approved && (
-                            <button
-                              onClick={() => approveUser(user.id)}
-                              className="cursor-pointer rounded-lg bg-green-500 px-3 py-2 text-sm text-white"
-                            >
-                              Approve
-                            </button>
-                          )}
-
-                          {user.is_approved && (
-                            <button
-                              onClick={() => revokeUser(user.id)}
-                              className="cursor-pointer rounded-lg bg-yellow-500 px-3 py-2 text-sm text-white"
-                            >
-                              Revoke
-                            </button>
-                          )}
-
-                          <Link
-                            href={`/dashboard/admin/users/${user.id}/tokens`}
-                            className="cursor-pointer rounded-lg bg-blue-500 px-3 py-2 text-center text-sm text-white"
-                          >
-                            Tokens
-                          </Link>
-
-                          <button
-                            onClick={() => deleteUser(user.id)}
-                            className="cursor-pointer rounded-lg bg-red-600 px-3 py-2 text-sm text-white"
-                          >
-                            Disable
-                          </button>
-
-                          {!user.is_approved && (
-                            <Link
-                              href={`/dashboard/admin/users/${user.id}/approval-time`}
-                              className="rounded bg-purple-600 px-3 py-2 text-white hover:bg-purple-700"
-                            >
-                              Approval Time
-                            </Link>
-                          )}
-                        </>
-                      )}
+                    <div>
+                      <p className="text-blue-100/50">Approval Time</p>
+                      <p className="mt-1 text-white">
+                        {formatDeadline(user.approval_deadline)}
+                      </p>
                     </div>
-                  )}
-                </div>
+                  </div>
+                  <div className="mt-4">
+                    <UserActions
+                      user={user}
+                      approveUser={approveUser}
+                      revokeUser={revokeUser}
+                      deleteUser={deleteUser}
+                      restoreUser={restoreUser}
+                    />
+                  </div>
+                </article>
               ))}
             </div>
           </>
         )}
 
-        {/* Pagination */}
-        <div className="mt-8 flex items-center justify-center gap-4">
-          <button
-            disabled={page === 1}
-            onClick={() => setPage((prev) => prev - 1)}
-            className="cursor-pointer rounded-lg bg-white/10 px-4 py-2 text-white disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            Previous
-          </button>
-
-          <span className="text-white">
-            Page {page} of {Math.max(1, Math.ceil(totalCount / PAGE_SIZE))}
-          </span>
-
-          <button
-            disabled={page >= Math.ceil(totalCount / PAGE_SIZE)}
-            onClick={() => setPage((prev) => prev + 1)}
-            className="cursor-pointer rounded-lg bg-white/10 px-4 py-2 text-white disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            Next
-          </button>
+        <div className="flex flex-col gap-3 border-t border-white/10 p-5 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm text-blue-100/60">
+            Page {page} of {totalPages}
+          </p>
+          <div className="flex gap-2">
+            <ActionButton
+              disabled={page === 1}
+              onClick={() => setPage((prev) => Math.max(1, prev - 1))}
+            >
+              Previous
+            </ActionButton>
+            <ActionButton
+              disabled={page >= totalPages}
+              onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
+            >
+              Next
+            </ActionButton>
+          </div>
         </div>
+      </section>
+    </div>
+  );
+}
+
+function UserIdentity({ user }: { user: UserProfile }) {
+  const name = user.username || user.email?.split("@")[0] || "User";
+
+  return (
+    <div className="flex min-w-0 items-center gap-3">
+      <UserAvatar name={name} />
+      <div className="min-w-0">
+        <p className="truncate font-semibold text-white">{name}</p>
+        <p className="truncate text-sm text-blue-100/60">{user.email}</p>
       </div>
     </div>
   );
 }
 
-function StatCard({ title, value }: { title: string; value: number }) {
-  return (
-    <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
-      <h3 className="text-blue-100/60">{title}</h3>
+function UserStatus({ user }: { user: UserProfile }) {
+  if (user.is_deleted) return <StatusBadge status="disabled" />;
+  if (user.is_admin) return <StatusBadge status="admin" label="Admin" />;
+  if (user.is_approved) return <StatusBadge status="approved" />;
+  return <StatusBadge status="pending" />;
+}
 
-      <p className="mt-3 text-4xl font-bold text-white">{value}</p>
+function UserActions({
+  user,
+  approveUser,
+  revokeUser,
+  deleteUser,
+  restoreUser,
+}: {
+  user: UserProfile;
+  approveUser: (id: string) => void;
+  revokeUser: (id: string) => void;
+  deleteUser: (id: string) => void;
+  restoreUser: (id: string) => void;
+}) {
+  if (user.is_admin) {
+    return <span className="text-sm text-blue-100/50">Admin account</span>;
+  }
+
+  if (user.is_deleted) {
+    return (
+      <ActionButton tone="primary" onClick={() => restoreUser(user.id)}>
+        Restore
+      </ActionButton>
+    );
+  }
+
+  return (
+    <div className="flex flex-wrap gap-2">
+      {!user.is_approved ? (
+        <ActionButton tone="success" onClick={() => approveUser(user.id)}>
+          Approve
+        </ActionButton>
+      ) : (
+        <ActionButton tone="warning" onClick={() => revokeUser(user.id)}>
+          Revoke
+        </ActionButton>
+      )}
+      <ActionButton href={`/dashboard/admin/users/${user.id}/tokens`} tone="primary">
+        Tokens
+      </ActionButton>
+      {!user.is_approved && (
+        <ActionButton
+          href={`/dashboard/admin/users/${user.id}/approval-time`}
+          tone="neutral"
+        >
+          Time
+        </ActionButton>
+      )}
+      <ActionButton tone="danger" onClick={() => deleteUser(user.id)}>
+        Disable
+      </ActionButton>
     </div>
   );
+}
+
+function formatDeadline(deadline?: string | null) {
+  if (!deadline) return "Not set";
+
+  const diff = new Date(deadline).getTime() - Date.now();
+  if (Number.isNaN(diff)) return "Invalid date";
+  if (diff <= 0) return "Expired";
+
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+  const hours = Math.floor(
+    (diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60),
+  );
+
+  return days > 0 ? `${days}d ${hours}h left` : `${hours}h left`;
 }

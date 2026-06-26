@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
 import { Bell, LogOut } from "lucide-react";
+import { UserAvatar } from "@/components/dashboard/ui";
 
 interface UserData {
   email?: string;
@@ -38,8 +39,6 @@ export default function Navbar() {
     user?.email?.split("@")[0] ||
     "User";
 
-  const firstLetter = userName.charAt(0).toUpperCase();
-
   return (
     <header className="border-b border-white/10 bg-white/5 backdrop-blur-xl">
       <div className="flex flex-col gap-4 p-4 md:flex-row md:items-center md:justify-between">
@@ -64,9 +63,7 @@ export default function Navbar() {
           </button>
 
           <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-3 py-2">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white font-semibold text-blue-900">
-              {firstLetter}
-            </div>
+            <UserAvatar name={userName} className="h-10 w-10" />
 
             <div className="hidden sm:block">
               <p className="text-sm font-medium text-white">

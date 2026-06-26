@@ -94,7 +94,7 @@ export default function SignupPage() {
         setLoading(false);
         return;
       }
-      const approvalHours = 120;
+      const approvalHours = 72;
 
       // Insert profile
       if (data.user) {
@@ -133,15 +133,17 @@ export default function SignupPage() {
   };
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-gradient-to-br from-[#10246e] via-[#2546b3] to-[#3d5afe] px-4">
-      <div className="w-full max-w-md rounded-3xl border border-white/10 bg-white/10 p-8 backdrop-blur-xl">
+    <main className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-950 via-blue-900 to-indigo-950 px-4 py-10">
+      <div className="w-full max-w-md rounded-2xl border border-white/10 bg-white/[0.08] p-6 shadow-2xl shadow-blue-950/30 backdrop-blur-xl sm:p-8">
         {/* Header */}
         <div className="mb-8 text-center">
-          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-white text-xl font-bold text-blue-900">
-            S
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-xl font-bold text-blue-900 shadow-lg">
+            A
           </div>
 
-          <h1 className="text-4xl font-bold text-white">Create Account</h1>
+          <h1 className="text-3xl font-bold text-white sm:text-4xl">
+            Create Account
+          </h1>
 
           <p className="mt-2 text-blue-100/70">
             Start your Axnetix journey today
@@ -155,7 +157,7 @@ export default function SignupPage() {
             placeholder="Username"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
-            className="w-full rounded-xl border border-white/10 bg-white/10 p-3 text-white placeholder:text-blue-100/50 outline-none"
+            className="h-12 w-full rounded-xl border border-white/10 bg-white/5 px-4 text-white placeholder:text-blue-100/45 outline-none transition focus:border-blue-300/60 focus:bg-white/10"
           />
 
           <input
@@ -163,7 +165,7 @@ export default function SignupPage() {
             placeholder="Email Address"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full rounded-xl border border-white/10 bg-white/10 p-3 text-white placeholder:text-blue-100/50 outline-none"
+            className="h-12 w-full rounded-xl border border-white/10 bg-white/5 px-4 text-white placeholder:text-blue-100/45 outline-none transition focus:border-blue-300/60 focus:bg-white/10"
           />
 
           <input
@@ -171,7 +173,7 @@ export default function SignupPage() {
             placeholder="Password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full rounded-xl border border-white/10 bg-white/10 p-3 text-white placeholder:text-blue-100/50 outline-none"
+            className="h-12 w-full rounded-xl border border-white/10 bg-white/5 px-4 text-white placeholder:text-blue-100/45 outline-none transition focus:border-blue-300/60 focus:bg-white/10"
           />
 
           <input
@@ -179,7 +181,7 @@ export default function SignupPage() {
             placeholder="Confirm Password"
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
-            className="w-full rounded-xl border border-white/10 bg-white/10 p-3 text-white placeholder:text-blue-100/50 outline-none"
+            className="h-12 w-full rounded-xl border border-white/10 bg-white/5 px-4 text-white placeholder:text-blue-100/45 outline-none transition focus:border-blue-300/60 focus:bg-white/10"
           />
 
           {errorMessage && (
@@ -197,7 +199,7 @@ export default function SignupPage() {
           <button
             onClick={handleSignup}
             disabled={loading}
-            className="cursor-pointer w-full rounded-xl bg-white py-3 font-semibold text-blue-900 transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+            className="h-12 w-full cursor-pointer rounded-xl bg-white font-semibold text-blue-900 transition hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {loading ? "Creating Account..." : "Create Account"}
           </button>

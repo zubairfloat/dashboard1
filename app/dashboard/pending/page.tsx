@@ -1,14 +1,24 @@
 "use client";
 
-import { supabase } from "@/lib/supabase/client";
 import { useEffect, useState } from "react";
+import type { ComponentType } from "react";
+import type { LucideProps } from "lucide-react";
+import { Clock3, MailCheck, ShieldCheck } from "lucide-react";
+import { supabase } from "@/lib/supabase/client";
+import { LoadingCard, StatusBadge } from "@/components/dashboard/ui";
+
+interface CountdownState {
+  label: string;
+  expired: boolean;
+}
 
 export default function PendingPage() {
-  const [timeLeft, setTimeLeft] =
-    useState("");
-
-  const [deadline, setDeadline] =
-    useState("");
+  const [loading, setLoading] = useState(true);
+  const [deadline, setDeadline] = useState("");
+  const [timeLeft, setTimeLeft] = useState<CountdownState>({
+    label: "Preparing review window...",
+    expired: false,
+  });
 
   useEffect(() => {
     const loadCountdown = async () => {
@@ -16,188 +26,160 @@ export default function PendingPage() {
         data: { user },
       } = await supabase.auth.getUser();
 
-      if (!user) return;
-
-      const { data: profile } =
-        await supabase
-          .from("profiles")
-          .select(`
-            is_deleted,
-            approval_deadline
-          `)
-          .eq("id", user.id)
-          .single();
-
-      if (!profile) return;
-
-      if (profile.is_deleted) {
-        window.location.href =
-          "/dashboard/restricted";
+      if (!user) {
+        window.location.href = "/login";
         return;
       }
 
-      if (
-        profile.approval_deadline
-      ) {
-        setDeadline(
-          profile.approval_deadline
-        );
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("is_deleted, is_approved, approval_deadline")
+        .eq("id", user.id)
+        .single();
+
+      if (!profile) {
+        setLoading(false);
+        return;
       }
+
+      if (profile.is_deleted) {
+        window.location.href = "/dashboard/restricted";
+        return;
+      }
+
+      if (profile.is_approved) {
+        window.location.href = "/dashboard";
+        return;
+      }
+
+      setDeadline(profile.approval_deadline || "");
+      setLoading(false);
     };
 
     loadCountdown();
   }, []);
 
   useEffect(() => {
-    if (!deadline) return;
+    if (!deadline) {
+      setTimeLeft({
+        label: "Review deadline is not set yet",
+        expired: false,
+      });
+      return;
+    }
 
-    const interval =
-      setInterval(() => {
-        const cycleDuration =
-          72 * 60 * 60 * 1000; // 72 Hours
+    const updateCountdown = () => {
+      const diff = new Date(deadline).getTime() - Date.now();
 
-        const originalDeadline =
-          new Date(
-            deadline
-          ).getTime();
+      if (Number.isNaN(diff)) {
+        setTimeLeft({ label: "Review deadline unavailable", expired: false });
+        return;
+      }
 
-        let nextDeadline =
-          originalDeadline;
+      if (diff <= 0) {
+        setTimeLeft({ label: "Review window elapsed", expired: true });
+        return;
+      }
 
-        while (
-          nextDeadline <
-          Date.now()
-        ) {
-          nextDeadline +=
-            cycleDuration;
-        }
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+      const hours = Math.floor(
+        (diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60),
+      );
+      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((diff % (1000 * 60)) / 1000);
 
-        const diff =
-          nextDeadline -
-          Date.now();
+      setTimeLeft({
+        label: `${days}d ${hours}h ${minutes}m ${seconds}s`,
+        expired: false,
+      });
+    };
 
-        const days =
-          Math.floor(
-            diff /
-              (1000 *
-                60 *
-                60 *
-                24)
-          );
+    updateCountdown();
+    const interval = setInterval(updateCountdown, 1000);
 
-        const hours =
-          Math.floor(
-            (diff %
-              (1000 *
-                60 *
-                60 *
-                24)) /
-              (1000 *
-                60 *
-                60)
-          );
-
-        const minutes =
-          Math.floor(
-            (diff %
-              (1000 *
-                60 *
-                60)) /
-              (1000 * 60)
-          );
-
-        const seconds =
-          Math.floor(
-            (diff %
-              (1000 * 60)) /
-              1000
-          );
-
-        setTimeLeft(
-          `${days}d ${hours}h ${minutes}m ${seconds}s`
-        );
-      }, 1000);
-
-    return () =>
-      clearInterval(interval);
+    return () => clearInterval(interval);
   }, [deadline]);
 
+  if (loading) {
+    return <LoadingCard label="Loading review status..." />;
+  }
+
   return (
-    <main className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-950 via-blue-900 to-indigo-900 px-4">
-      <div className="w-full max-w-2xl rounded-3xl border border-white/10 bg-white/5 p-8 text-center backdrop-blur-xl">
-        <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-white text-2xl font-bold text-blue-900">
-          A
-        </div>
-
-        <h1 className="mb-4 text-4xl font-bold text-white">
-          Account Under Review
-        </h1>
-
-        <p className="mb-8 text-blue-100/70">
-          Your Axnetix account is
-          currently undergoing
-          verification and
-          approval.
-        </p>
-
-        <div className="mb-8 rounded-2xl border border-amber-500/30 bg-amber-500/10 p-6">
-          <h2 className="mb-3 text-xl font-semibold text-white">
-            Approval Countdown
-          </h2>
-
-          <div className="text-4xl font-bold text-amber-300">
-            {timeLeft}
-          </div>
-        </div>
-
-        <div className="rounded-xl border border-blue-500/20 bg-blue-500/10 p-5 text-sm text-blue-100">
-          Your account is waiting
-          for administrator
-          approval.
-          <br />
-          <br />
-          Once approved, you will
-          receive a confirmation
-          email and gain access
-          to all platform
-          features.
-        </div>
-
-        <div className="mt-8 space-y-3 text-left text-blue-100/80">
-          <p>
-            • Your account
-            information is being
-            reviewed.
-          </p>
-
-          <p>
-            • Platform access
-            remains restricted
-            until approval.
-          </p>
-
-          <p>
-            • Token allocation
-            and package setup
-            will be completed
-            after approval.
-          </p>
-
-          <p>
-            • You will receive an
-            email notification
-            once your account is
-            approved.
+    <main className="flex min-h-[85vh] items-center justify-center px-4 py-10">
+      <div className="w-full max-w-4xl overflow-hidden rounded-2xl border border-white/10 bg-white/[0.07] shadow-2xl shadow-blue-950/30 backdrop-blur-xl">
+        <div className="border-b border-white/10 p-6 md:p-8">
+          <StatusBadge
+            status={timeLeft.expired ? "pending" : "active"}
+            label={timeLeft.expired ? "Review in progress" : "Account review"}
+          />
+          <h1 className="mt-4 text-3xl font-bold text-white md:text-5xl">
+            Account Under Review
+          </h1>
+          <p className="mt-3 max-w-2xl text-blue-100/70">
+            Your Axnetix account is waiting for administrator approval. You will
+            receive an email as soon as access is enabled.
           </p>
         </div>
 
-        <div className="mt-8 rounded-xl border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-100">
-          If your account remains
-          pending for an extended
-          period, please contact
-          Axnetix Support.
+        <div className="grid gap-5 p-6 md:grid-cols-[1fr_0.8fr] md:p-8">
+          <section className="rounded-2xl border border-amber-300/20 bg-amber-300/10 p-6">
+            <div className="flex items-center gap-3 text-amber-100">
+              <Clock3 size={22} />
+              <h2 className="text-lg font-semibold">Approval Countdown</h2>
+            </div>
+            <p className="mt-5 text-4xl font-bold text-amber-200 md:text-5xl">
+              {timeLeft.label}
+            </p>
+            <p className="mt-4 text-sm text-amber-100/75">
+              {timeLeft.expired
+                ? "The original review window has passed. Your account remains in the approval queue."
+                : "This countdown is based on the approval deadline stored on your profile."}
+            </p>
+          </section>
+
+          <section className="space-y-3">
+            <ReviewStep
+              icon={ShieldCheck}
+              title="Profile review"
+              text="Your account details are being checked by the admin team."
+            />
+            <ReviewStep
+              icon={MailCheck}
+              title="Email notification"
+              text="Approval sends a confirmation email and unlocks your dashboard."
+            />
+          </section>
+        </div>
+
+        <div className="border-t border-white/10 bg-blue-400/10 p-5 text-sm text-blue-100">
+          If your account remains pending longer than expected, contact Axnetix
+          Support at info@axnetix.com.
         </div>
       </div>
     </main>
+  );
+}
+
+function ReviewStep({
+  icon: Icon,
+  title,
+  text,
+}: {
+  icon: ComponentType<LucideProps>;
+  title: string;
+  text: string;
+}) {
+  return (
+    <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
+      <div className="flex items-start gap-3">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/10 text-blue-100">
+          <Icon size={19} />
+        </div>
+        <div>
+          <h3 className="font-semibold text-white">{title}</h3>
+          <p className="mt-1 text-sm text-blue-100/65">{text}</p>
+        </div>
+      </div>
+    </div>
   );
 }

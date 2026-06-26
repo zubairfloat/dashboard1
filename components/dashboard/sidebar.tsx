@@ -4,12 +4,14 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
 import {
+  Crown,
   LayoutDashboard,
   User,
   Package,
   Coins,
   Settings,
 } from "lucide-react";
+import { StatusBadge, UserAvatar } from "@/components/dashboard/ui";
 
 interface UserData {
   email?: string;
@@ -73,9 +75,6 @@ export default function Sidebar() {
     user?.user_metadata?.name ||
     user?.email?.split("@")[0] ||
     "User";
-
-  const firstLetter =
-    userName.charAt(0).toUpperCase();
 
   const isAdmin =
     profile?.is_admin ?? false;
@@ -220,9 +219,10 @@ export default function Sidebar() {
         {isAdmin && (
           <Link
             href="/dashboard/admin"
-            className="flex min-w-fit items-center gap-2 rounded-xl bg-green-500/10 px-4 py-3 text-green-400 transition hover:bg-green-500/20"
+            className="flex min-w-fit items-center gap-2 rounded-xl bg-sky-500/10 px-4 py-3 text-sky-200 transition hover:bg-sky-500/20"
           >
-            👑 Admin Panel
+            <Crown size={18} />
+            Admin Panel
           </Link>
         )}
       </nav>
@@ -231,9 +231,7 @@ export default function Sidebar() {
       <div className="hidden lg:block p-4">
         <div className="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-xl">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white font-semibold text-blue-900">
-              {firstLetter}
-            </div>
+            <UserAvatar name={userName} className="h-10 w-10" />
 
             <div className="min-w-0">
               <p className="truncate text-sm font-medium text-white">
@@ -245,17 +243,17 @@ export default function Sidebar() {
               </p>
 
               {isAdmin ? (
-                <p className="mt-1 text-xs font-semibold text-green-400">
-                  👑 Super Admin
-                </p>
+                <div className="mt-2">
+                  <StatusBadge status="admin" label="Super Admin" />
+                </div>
               ) : profile?.is_approved ? (
-                <p className="mt-1 text-xs font-semibold text-green-400">
-                  Approved User
-                </p>
+                <div className="mt-2">
+                  <StatusBadge status="approved" label="Approved" />
+                </div>
               ) : (
-                <p className="mt-1 text-xs font-semibold text-yellow-400">
-                  Pending Approval
-                </p>
+                <div className="mt-2">
+                  <StatusBadge status="pending" label="Pending" />
+                </div>
               )}
             </div>
           </div>

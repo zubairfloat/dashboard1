@@ -2,279 +2,271 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabase/client";
 import { sendApprovalEmail } from "@/lib/email/sendApprovalEmail";
+import { supabase } from "@/lib/supabase/client";
+import { ActionButton, LoadingCard, StatCard, StatusBadge } from "@/components/dashboard/ui";
+import { Calculator, Coins, Gift, Wallet } from "lucide-react";
 
 export default function TokenPage() {
   const params = useParams();
   const router = useRouter();
-
   const userId = params.id as string;
 
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState("");
   const [username, setUsername] = useState("");
-  const [isApproved, setIsApproved] =
-  useState(false);
+  const [email, setEmail] = useState("");
+  const [isApproved, setIsApproved] = useState(false);
+  const [purchaseAmount, setPurchaseAmount] = useState("");
+  const [bonusTokens, setBonusTokens] = useState("");
+  const [currentRate, setCurrentRate] = useState(0.1);
 
-  const [purchaseAmount, setPurchaseAmount] = useState<string>("");
-
-  const [bonusTokens, setBonusTokens] = useState<string>("");
-
-  const [currentRate, setCurrentRate] = useState<number>(0.1);
-
-  const [assignedTokens, setAssignedTokens] = useState<number>(0);
-
-  const [totalTokens, setTotalTokens] = useState<number>(0);
+  const assignedTokens =
+    Number(purchaseAmount || 0) > 0 && currentRate > 0
+      ? Math.floor(Number(purchaseAmount || 0) / currentRate)
+      : 0;
+  const totalTokens = assignedTokens + Number(bonusTokens || 0);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/immutability
     loadUser();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  useEffect(() => {
-    const amount = Number(purchaseAmount || 0);
-
-    const bonus = Number(bonusTokens || 0);
-
-    const calculatedAssigned =
-      amount > 0 ? Math.floor(amount / currentRate) : 0;
-
-    const calculatedTotal = calculatedAssigned + bonus;
-
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setAssignedTokens(calculatedAssigned);
-
-    setTotalTokens(calculatedTotal);
-  }, [purchaseAmount, bonusTokens, currentRate]);
 
   const loadUser = async () => {
     const { data, error } = await supabase
       .from("profiles")
-      .select("*")
+      .select("username, email, is_approved, purchase_amount, bonus_tokens, current_rate")
       .eq("id", userId)
       .single();
 
     if (error) {
-      alert(error.message);
+      setMessage(error.message);
+      setLoading(false);
       return;
     }
 
-if (data) {
-  setUsername(data.username || "");
-
-  setIsApproved(
-    data.is_approved || false
-  );
-
-  setPurchaseAmount(
-    data.purchase_amount
-      ? String(data.purchase_amount)
-      : ""
-  );
-
-  setBonusTokens(
-    data.bonus_tokens
-      ? String(data.bonus_tokens)
-      : ""
-  );
-
-  setCurrentRate(
-    data.current_rate || 0.1
-  );
-}
+    setUsername(data.username || "");
+    setEmail(data.email || "");
+    setIsApproved(Boolean(data.is_approved));
+    setPurchaseAmount(data.purchase_amount ? String(data.purchase_amount) : "");
+    setBonusTokens(data.bonus_tokens ? String(data.bonus_tokens) : "");
+    setCurrentRate(data.current_rate || 0.1);
     setLoading(false);
   };
 
   const saveTokens = async () => {
+    setMessage("");
+
     if (currentRate <= 0) {
-      alert("Current Rate must be greater than 0");
-      return;
+      setMessage("Current rate must be greater than 0.");
+      return false;
     }
+
+    setSaving(true);
+
     const { error } = await supabase
       .from("profiles")
       .update({
         purchase_amount: Number(purchaseAmount || 0),
-
         current_rate: currentRate,
-
         assigned_tokens: assignedTokens,
-
         bonus_tokens: Number(bonusTokens || 0),
-
         total_tokens: totalTokens,
-
         remaining_tokens: totalTokens,
       })
       .eq("id", userId);
 
+    setSaving(false);
+
     if (error) {
-      alert(error.message);
+      setMessage(error.message);
+      return false;
+    }
+
+    setMessage("Tokens saved successfully.");
+    return true;
+  };
+
+  const approveUser = async () => {
+    setMessage("");
+
+    if (assignedTokens <= 0 || totalTokens <= 0) {
+      setMessage("Please assign tokens before approving the user.");
       return;
     }
 
-    alert("Tokens saved successfully");
+    const saved = await saveTokens();
+    if (!saved) return;
+
+    const { error } = await supabase
+      .from("profiles")
+      .update({
+        is_approved: true,
+        approved_at: new Date().toISOString(),
+      })
+      .eq("id", userId);
+
+    if (error) {
+      setMessage(error.message);
+      return;
+    }
+
+    try {
+      await sendApprovalEmail(email, username || "User");
+      setMessage(`User approved successfully. Email sent to ${email}.`);
+    } catch (err) {
+      console.error("Failed to send approval email:", err);
+      setMessage("User approved, but the approval email could not be sent.");
+    }
+
+    setIsApproved(true);
+    setTimeout(() => {
+      router.push("/dashboard/admin");
+    }, 1000);
   };
 
-const approveUser = async () => {
-  if (totalTokens <= 0) {
-    alert(
-      "Please assign tokens before approving the user."
-    );
-    return;
-  }
-
-  const { data: userProfile, error: profileError } =
-    await supabase
-      .from("profiles")
-      .select("email, username")
-      .eq("id", userId)
-      .single();
-
-  if (profileError || !userProfile) {
-    alert("User not found");
-    return;
-  }
-
-  const { error } = await supabase
-    .from("profiles")
-    .update({
-      is_approved: true,
-      approved_at: new Date().toISOString(),
-    })
-    .eq("id", userId);
-
-  if (error) {
-    alert(error.message);
-    return;
-  }
-
-  try {
-    await sendApprovalEmail(
-      userProfile.email,
-      userProfile.username
-    );
-  } catch (err) {
-    console.error(
-      "Failed to send approval email:",
-      err
-    );
-  }
-
-  alert(
-    `User approved successfully. Email sent to ${userProfile.email}`
-  );
-   setIsApproved(true);
-
-  setTimeout(() => {
-  router.push("/dashboard/admin");
-}, 1000);
-};
-
   if (loading) {
-    return <div className="p-8 text-white">Loading...</div>;
+    return <LoadingCard label="Loading token assignment..." />;
   }
 
   return (
-    <div className="mx-auto max-w-3xl">
-      <h1 className="mb-2 text-4xl font-bold text-white">Assign Tokens</h1>
+    <div className="mx-auto max-w-5xl space-y-8">
+      <div className="rounded-2xl border border-white/10 bg-white/[0.07] p-6 shadow-2xl shadow-blue-950/20 backdrop-blur-xl md:p-8">
+        <StatusBadge
+          status={isApproved ? "approved" : "pending"}
+          label={isApproved ? "Approved user" : "Pending approval"}
+        />
+        <h1 className="mt-4 text-3xl font-bold text-white md:text-4xl">
+          Assign Tokens
+        </h1>
+        <p className="mt-2 text-blue-100/70">
+          Configure purchase amount, current rate, and bonus tokens for{" "}
+          <span className="font-semibold text-white">{username || email}</span>.
+        </p>
+      </div>
 
-      <p className="mb-8 text-blue-100/70">User: {username}</p>
+      <div className="grid gap-5 md:grid-cols-3">
+        <StatCard
+          title="Assigned Tokens"
+          value={assignedTokens.toLocaleString()}
+          icon={Coins}
+        />
+        <StatCard
+          title="Bonus Tokens"
+          value={Number(bonusTokens || 0).toLocaleString()}
+          icon={Gift}
+          tone="violet"
+        />
+        <StatCard
+          title="Total Tokens"
+          value={totalTokens.toLocaleString()}
+          icon={Wallet}
+          tone="green"
+        />
+      </div>
 
-      <div className="rounded-3xl border border-white/10 bg-white/5 p-8">
-        <div className="space-y-6">
-          {/* Purchase Amount */}
-
+      <section className="rounded-2xl border border-white/10 bg-white/[0.07] p-6 shadow-2xl shadow-blue-950/20 backdrop-blur-xl md:p-8">
+        <div className="mb-6 flex items-center gap-3">
+          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-400/10 text-blue-200">
+            <Calculator size={20} />
+          </div>
           <div>
-            <label className="mb-2 block text-white">Purchase Amount ($)</label>
+            <h2 className="text-xl font-semibold text-white">
+              Token Calculator
+            </h2>
+            <p className="text-sm text-blue-100/60">
+              Assigned tokens are calculated as purchase amount divided by the
+              current rate.
+            </p>
+          </div>
+        </div>
 
+        <div className="grid gap-5 md:grid-cols-2">
+          <Field label="Purchase Amount ($)">
             <input
               type="number"
+              min="0"
               placeholder="Enter purchase amount"
               value={purchaseAmount}
               onChange={(e) => setPurchaseAmount(e.target.value)}
-              className="w-full rounded-xl border border-white/10 bg-white/10 p-3 text-white placeholder:text-white/40"
+              className="h-12 w-full rounded-xl border border-white/10 bg-white/5 px-4 text-white placeholder:text-blue-100/40 outline-none transition focus:border-blue-300/60 focus:bg-white/10"
             />
-          </div>
+          </Field>
 
-          {/* Current Rate */}
-
-          <div>
-            <label className="mb-2 block text-white">Current Rate</label>
-
+          <Field label="Current Rate">
             <input
               type="number"
               step="0.01"
               min="0.01"
               value={currentRate}
               onChange={(e) => setCurrentRate(Number(e.target.value))}
-              className="w-full rounded-xl border border-white/10 bg-white/10 p-3 text-white"
+              className="h-12 w-full rounded-xl border border-white/10 bg-white/5 px-4 text-white outline-none transition focus:border-blue-300/60 focus:bg-white/10"
             />
-          </div>
+          </Field>
 
-          {/* Assigned Tokens */}
-
-          <div>
-            <label className="mb-2 block text-white">Assigned Tokens</label>
-
+          <Field label="Assigned Tokens">
             <input
               value={assignedTokens}
               readOnly
-              className="w-full rounded-xl border border-white/10 bg-white/5 p-3 text-white"
+              className="h-12 w-full rounded-xl border border-white/10 bg-white/[0.03] px-4 text-blue-100 outline-none"
             />
-          </div>
+          </Field>
 
-          {/* Bonus Tokens */}
-
-          <div>
-            <label className="mb-2 block text-white">Bonus Tokens</label>
-
+          <Field label="Bonus Tokens">
             <input
               type="number"
+              min="0"
               placeholder="Enter bonus tokens"
               value={bonusTokens}
               onChange={(e) => setBonusTokens(e.target.value)}
-              className="w-full rounded-xl border border-white/10 bg-white/10 p-3 text-white placeholder:text-white/40"
+              className="h-12 w-full rounded-xl border border-white/10 bg-white/5 px-4 text-white placeholder:text-blue-100/40 outline-none transition focus:border-blue-300/60 focus:bg-white/10"
             />
-          </div>
-
-          {/* Total Tokens */}
-
-          <div>
-            <label className="mb-2 block text-white">Total Tokens</label>
-
-            <input
-              value={totalTokens}
-              readOnly
-              className="w-full rounded-xl border border-white/10 bg-white/5 p-3 text-white"
-            />
-          </div>
-
-          {/* Actions */}
-
-     <div className="flex gap-4">
-  <button
-    onClick={saveTokens}
-    className="rounded-xl bg-blue-600 px-6 py-3 text-white transition hover:bg-blue-700"
-  >
-    Save Tokens
-  </button>
-
-  {!isApproved ? (
-    <button
-      onClick={approveUser}
-      className="rounded-xl bg-green-600 px-6 py-3 text-white transition hover:bg-green-700"
-    >
-      Approve User
-    </button>
-  ) : (
-    <div className="rounded-xl bg-emerald-700 px-6 py-3 text-white">
-      ✓ User Already Approved
-    </div>
-  )}
-</div>
+          </Field>
         </div>
-      </div>
+
+        {message && (
+          <div className="mt-6 rounded-xl border border-blue-300/20 bg-blue-400/10 p-3 text-sm text-blue-100">
+            {message}
+          </div>
+        )}
+
+        <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+          <ActionButton
+            tone="primary"
+            onClick={saveTokens}
+            disabled={saving}
+            className="sm:min-w-36"
+          >
+            {saving ? "Saving..." : "Save Tokens"}
+          </ActionButton>
+
+          {!isApproved ? (
+            <ActionButton tone="success" onClick={approveUser}>
+              Approve User
+            </ActionButton>
+          ) : (
+            <StatusBadge status="approved" label="User already approved" />
+          )}
+        </div>
+      </section>
     </div>
+  );
+}
+
+function Field({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <label>
+      <span className="mb-2 block text-sm font-medium text-blue-100/70">
+        {label}
+      </span>
+      {children}
+    </label>
   );
 }
