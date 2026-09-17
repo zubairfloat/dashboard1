@@ -1,0 +1,4 @@
+.block { border-radius:8px; background:#ffffff0c; position:relative; overflow:hidden; }
+.block::after { content:""; position:absolute; inset:0; background:linear-gradient(90deg,transparent,#a9e8ed12,transparent); transform:translateX(-100%); animation:shimmer 1.6s ease-in-out infinite; }
+@keyframes shimmer { to { transform:translateX(100%); } }
+@media(prefers-reduced-motion:reduce) { .block::after { animation:none; transform:none; } }

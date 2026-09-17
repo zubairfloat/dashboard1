@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { Skeleton } from "../skeleton";
 import { useState } from "react";
 import { ShieldCheck, Upload, RefreshCw } from "lucide-react";
 import { formatDateTime } from "@/lib/format";
@@ -73,7 +74,7 @@ export default function PersonalKycForm() {
         <button disabled={busy} onClick={() => window.dispatchEvent(new Event("kyc-updated"))} className="flex items-center gap-2 rounded-xl border border-white/15 px-4 py-2 text-blue-100 disabled:opacity-50"><RefreshCw size={16} /> Refresh</button>
       </div>
       <div aria-live="polite" className="mt-5 text-blue-100">
-        {!ready ? "Loading verification…" : <>
+        {!ready ? <div role="status" aria-label="Loading verification" className="space-y-3"><Skeleton className="h-8 w-32" /><Skeleton className="h-4 w-64 max-w-full" /></div> : <>
           <span className={`inline-block rounded-full px-4 py-2 text-sm ${submission?.status === "verified" ? "bg-emerald-400/10 text-emerald-200" : "bg-amber-400/10 text-amber-200"}`}>{submission ? labels[submission.status] : "KYC Pending"}</span>
           {submission && <p className="mt-3 text-sm text-blue-100/70">{submission.country} · {getKycDocument(submission.document_type).label} · Submitted {formatDateTime(submission.created_at)}</p>}
           {submission?.status === "pending" && <p className="mt-4">Your documents are awaiting review. No further upload is needed.</p>}

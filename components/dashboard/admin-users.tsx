@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
+import { RowsSkeleton } from "./skeleton";
 import { sendApprovalEmail } from "@/lib/email/sendApprovalEmail";
 import { supabase } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import {
   ActionButton,
-  LoadingCard,
   StatCard,
   StatusBadge,
   UserAvatar,
@@ -48,7 +48,7 @@ export default function AdminUsers({ users, stats, totalCount, page, statusFilte
   initialNow: number;
 }) {
   const router = useRouter();
-  const loading = false;
+  const [loading, startTransition] = useTransition();
   const [message, setMessage] = useState("");
   const [searchDraft, setSearchDraft] = useState({ source: initialSearch, value: initialSearch });
   const search = searchDraft.source === initialSearch ? searchDraft.value : initialSearch;
@@ -56,23 +56,23 @@ export default function AdminUsers({ users, stats, totalCount, page, statusFilte
   function navigate(nextPage: number, nextStatus = statusFilter, nextSearch = search) {
     const params = new URLSearchParams({ page: String(nextPage), status: nextStatus });
     if (nextSearch.trim()) params.set("search", nextSearch.trim());
-    router.push(`/dashboard/admin?${params}`, { scroll: false });
+    startTransition(() => router.push(`/dashboard/admin?${params}`, { scroll: false }));
   }
   const totalPages = useMemo(
     () => Math.max(1, Math.ceil(totalCount / PAGE_SIZE)),
     [totalCount],
   );
 
-  const loadUsers = async () => { router.refresh(); };
+  const loadUsers = async () => { startTransition(() => router.refresh()); };
   useEffect(() => {
     if (search === initialSearch) return;
     const timer = setTimeout(() => {
       const params = new URLSearchParams({ page: "1", status: statusFilter });
       if (search.trim()) params.set("search", search.trim());
-      router.replace(`/dashboard/admin?${params}`, { scroll: false });
+      startTransition(() => router.replace(`/dashboard/admin?${params}`, { scroll: false }));
     }, 350);
     return () => clearTimeout(timer);
-  }, [search, initialSearch, statusFilter, router]);
+  }, [search, initialSearch, statusFilter, router, startTransition]);
 
   const approveUser = async (id: string) => {
     const { data: userProfile, error: profileError } = await supabase
@@ -263,7 +263,7 @@ export default function AdminUsers({ users, stats, totalCount, page, statusFilte
         </div>
 
         {loading ? (
-          <LoadingCard label="Loading users..." />
+          <RowsSkeleton />
         ) : users.length === 0 ? (
           <div className="p-8 text-center text-blue-100/60">
             No users match the current filters.
@@ -365,14 +365,14 @@ export default function AdminUsers({ users, stats, totalCount, page, statusFilte
           <div className="flex gap-2">
             <ActionButton
               className="workspace-pagination"
-              disabled={page === 1}
+              disabled={loading || page === 1}
               onClick={() => navigate(Math.max(1, page - 1))}
             >
               Previous
             </ActionButton>
             <ActionButton
               className="workspace-pagination"
-              disabled={page >= totalPages}
+              disabled={loading || page >= totalPages}
               onClick={() => navigate(Math.min(totalPages, page + 1))}
             >
               Next

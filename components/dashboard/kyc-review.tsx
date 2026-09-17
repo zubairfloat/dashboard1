@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { ReviewSkeleton, DocumentsSkeleton } from "./skeleton";
 import { ActionButton } from "./ui";
 import { formatDateTime } from "@/lib/format";
 import { useEffect, useRef, useState } from "react";
@@ -39,7 +40,7 @@ export default function KycReviewContent({ initialItems, initialCount, requestId
     <header><Link href="/dashboard/admin" className="text-sm text-sky-300">Back to user management</Link><h1 className="mt-4 text-3xl font-bold">KYC review</h1><p className="mt-2 text-blue-100/70">Review submitted documents, then approve or give a clear reason for resubmission.</p></header>
     {message && <p role="alert" className="rounded-xl bg-amber-400/10 p-4 text-amber-100">{message}</p>}
     {requestId ? <Link href="/dashboard/admin/kyc" className="inline-block text-sky-300">View all KYC requests</Link> : allowed && <label className="block text-sm text-blue-100">Submission status<select value={filter} onChange={e => { setLoading(true); setMessage(""); setFilter(e.target.value); setPage(0); }} className="ml-3 rounded-xl border border-white/15 bg-blue-950 p-3"><option value="pending">Documents submitted / Under review</option><option value="verified">Approved / Verified</option><option value="rejected">Rejected / Action required</option></select></label>}
-    {loading ? <p role="status">Loading submissions…</p> : allowed && <>
+    {loading ? <ReviewSkeleton /> : allowed && <>
       {!items.length && <p className="workspace-panel rounded-2xl border border-white/10 bg-white/5 p-8 text-blue-100/70">No {filter} submissions.</p>}
       {items.map(item => <ReviewCard key={item.id} item={item} onReviewed={() => { setLoading(true); setPage(0); setRevision(value => value + 1); }} />)}
       <div className="flex items-center gap-4"><ActionButton className="workspace-pagination" disabled={page === 0} onClick={() => { setLoading(true); setPage(p => p - 1); }}>Previous</ActionButton><span>Page {page + 1}</span><ActionButton className="workspace-pagination" disabled={(page + 1) * 10 >= count} onClick={() => { setLoading(true); setPage(p => p + 1); }}>Next</ActionButton></div>
@@ -55,7 +56,9 @@ function ReviewCard({ item, onReviewed }: { item: KycSubmission; onReviewed: () 
   const [reason, setReason] = useState("");
   const [checked, setChecked] = useState(false);
   useEffect(() => () => { photos.forEach(file => URL.revokeObjectURL(file.url)); }, [photos]);
+  const [loadingDocuments, setLoadingDocuments] = useState(false);
   async function viewPhotos() {
+    setLoadingDocuments(true);
     setBusy(true); setError("");
     const urls: { url: string; mime: string; label: string }[] = [];
     try {
@@ -68,7 +71,7 @@ function ReviewCard({ item, onReviewed }: { item: KycSubmission; onReviewed: () 
       }
       setPhotos(urls);
     } catch (error) { urls.forEach(file => URL.revokeObjectURL(file.url)); setError(error instanceof Error ? error.message : "Could not load documents."); }
-    finally { setBusy(false); }
+    finally { setBusy(false); setLoadingDocuments(false); }
   }
   async function review(status: "verified" | "rejected") {
     if (status === "rejected" && reason.trim().length < 3) { setError("Enter a reason so the user can correct their submission."); return; }
@@ -84,6 +87,7 @@ function ReviewCard({ item, onReviewed }: { item: KycSubmission; onReviewed: () 
   return <article className="space-y-4 workspace-panel rounded-3xl border border-white/10 bg-white/5 p-6">
     <div><h2 className="text-xl font-semibold">{item.full_name}</h2><p className="mt-1 text-sm text-blue-100/70">{item.country} · {document.label} · {formatDateTime(item.created_at)}</p><p className="mt-1 break-all text-xs text-blue-100/50">Account: {item.user_id}</p><p className="mt-3 text-sm font-medium text-sky-200">{item.status === "pending" ? "Documents submitted — Under admin review" : item.status === "verified" ? "Approved — KYC Verified" : "Rejected — Action Required"}</p></div>
     <button disabled={busy} onClick={() => photos.length ? setPhotos([]) : void viewPhotos()} className="rounded-xl border border-white/15 px-4 py-2 disabled:opacity-40">{photos.length ? "Hide documents" : busy ? "Loading…" : "View documents"}</button>
+    {loadingDocuments && <DocumentsSkeleton count={requiredCount} />}
     {photos.length > 0 && <div className="grid gap-4 md:grid-cols-2">{photos.map(file => <figure key={file.url}>
       <figcaption className="mb-2 text-sm text-blue-100">{file.label}</figcaption>
       {file.mime === "application/pdf" ? <div className="rounded-xl border border-white/10 bg-blue-950 p-5">

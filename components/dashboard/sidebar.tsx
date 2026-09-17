@@ -25,7 +25,7 @@ export default async function Sidebar() {
 
   return (
     <aside className="workspace-sidebar">
-      <Link href="/dashboard" className="workspace-brand"><span>A</span><div>Axnetix<span className="workspace-brand-dot">.</span><p>{isAdmin ? "ADMIN WORKSPACE" : "YOUR WORKSPACE"}</p></div></Link>
+      <Link href={isAdmin ? "/dashboard/admin" : "/dashboard"} className="workspace-brand"><span>A</span><div>Axnetix<span className="workspace-brand-dot">.</span><p>{isAdmin ? "ADMIN WORKSPACE" : "YOUR WORKSPACE"}</p></div></Link>
       <p className="workspace-nav-caption">WORKSPACE</p>
       <Navigation isAdmin={isAdmin} hasPackage={hasPackage} hasTokens={hasTokens} />
 
