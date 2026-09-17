@@ -1,8 +1,5 @@
-"use client";
-
-import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase/client";
-import type { User } from "@supabase/supabase-js";
+import Link from "next/link";
+import { requireActiveAccount } from "@/lib/dashboard-data";
 import {
   Mail,
   User as UserIcon,
@@ -10,20 +7,9 @@ import {
   Shield,
 } from "lucide-react";
 
-export default function ProfilePage() {
-  const [user, setUser] = useState<User | null>(null);
-
-  useEffect(() => {
-    async function loadUser() {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      setUser(user);
-    }
-
-    loadUser();
-  }, []);
+export default async function ProfilePage() {
+  const { user, profile } = await requireActiveAccount();
+  const admin = profile.is_admin;
 
   const fullName =
     user?.user_metadata?.full_name ||
@@ -47,7 +33,7 @@ export default function ProfilePage() {
       </div>
 
       {/* Profile Card */}
-      <div className="rounded-3xl border border-white/10 bg-white/5 p-8 backdrop-blur-xl">
+      <div className="workspace-panel rounded-3xl border border-white/10 bg-white/5 p-8 backdrop-blur-xl">
         <div className="flex flex-col gap-6 md:flex-row md:items-center">
           {/* Avatar */}
           <div>
@@ -81,9 +67,18 @@ export default function ProfilePage() {
         </div>
       </div>
 
+      {!admin && <Link href="/dashboard/kyc" className="mt-8 flex items-center gap-4 rounded-3xl border border-sky-300/20 bg-sky-400/10 p-6 text-white transition hover:bg-sky-400/20">
+        <Shield className="shrink-0 text-sky-300" size={26} />
+        <div>
+          <h2 className="font-semibold">KYC Verification</h2>
+          <p className="mt-1 text-sm text-blue-100/70">View your identity verification status and next steps.</p>
+        </div>
+        <span aria-hidden="true" className="ml-auto">→</span>
+      </Link>}
+
       {/* Details */}
       <div className="mt-8 grid gap-6 md:grid-cols-2">
-        <div className="rounded-3xl border border-white/10 bg-white/5 p-6 backdrop-blur-xl">
+        <div className="workspace-panel rounded-3xl border border-white/10 bg-white/5 p-6 backdrop-blur-xl">
           <div className="mb-4 flex items-center gap-3">
             <UserIcon
               size={20}
@@ -99,7 +94,7 @@ export default function ProfilePage() {
           </p>
         </div>
 
-        <div className="rounded-3xl border border-white/10 bg-white/5 p-6 backdrop-blur-xl">
+        <div className="workspace-panel rounded-3xl border border-white/10 bg-white/5 p-6 backdrop-blur-xl">
           <div className="mb-4 flex items-center gap-3">
             <Mail
               size={20}
@@ -115,7 +110,7 @@ export default function ProfilePage() {
           </p>
         </div>
 
-        <div className="rounded-3xl border border-white/10 bg-white/5 p-6 backdrop-blur-xl">
+        <div className="workspace-panel rounded-3xl border border-white/10 bg-white/5 p-6 backdrop-blur-xl">
           <div className="mb-4 flex items-center gap-3">
             <Shield
               size={20}
@@ -131,7 +126,7 @@ export default function ProfilePage() {
           </p>
         </div>
 
-        <div className="rounded-3xl border border-white/10 bg-white/5 p-6 backdrop-blur-xl">
+        <div className="workspace-panel rounded-3xl border border-white/10 bg-white/5 p-6 backdrop-blur-xl">
           <div className="mb-4 flex items-center gap-3">
             <Calendar
               size={20}
@@ -153,7 +148,7 @@ export default function ProfilePage() {
       </div>
 
       {/* User ID */}
-      <div className="mt-8 rounded-3xl border border-white/10 bg-white/5 p-6 backdrop-blur-xl">
+      <div className="mt-8 workspace-panel rounded-3xl border border-white/10 bg-white/5 p-6 backdrop-blur-xl">
         <h3 className="mb-3 font-semibold text-white">
           User ID
         </h3>

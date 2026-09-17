@@ -1,79 +1,9 @@
-"use client";
-
-import { useEffect, useState } from "react";
 import { Coins, Gauge, Gift, Wallet, Zap } from "lucide-react";
-import { supabase } from "@/lib/supabase/client";
-import { ActionButton, LoadingCard, StatCard, StatusBadge } from "@/components/dashboard/ui";
+import { requireActiveAccount } from "@/lib/dashboard-data";
+import { ActionButton, StatCard, StatusBadge } from "@/components/dashboard/ui";
 
-interface TokenData {
-  assigned_tokens: number;
-  bonus_tokens: number;
-  total_tokens: number;
-  remaining_tokens: number;
-  current_rate: number;
-  is_approved: boolean;
-}
-
-export default function TokensPage() {
-  const [loading, setLoading] = useState(true);
-  const [message, setMessage] = useState("");
-  const [tokenData, setTokenData] = useState<TokenData>({
-    assigned_tokens: 0,
-    bonus_tokens: 0,
-    total_tokens: 0,
-    remaining_tokens: 0,
-    current_rate: 0,
-    is_approved: false,
-  });
-
-  useEffect(() => {
-    loadTokens();
-  }, []);
-
-  const loadTokens = async () => {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      setLoading(false);
-      return;
-    }
-
-    const { data, error } = await supabase
-      .from("profiles")
-      .select(
-        `
-        assigned_tokens,
-        bonus_tokens,
-        total_tokens,
-        remaining_tokens,
-        current_rate,
-        is_approved
-      `,
-      )
-      .eq("id", user.id)
-      .single();
-
-    if (error) {
-      setMessage(error.message);
-      setLoading(false);
-      return;
-    }
-
-    if (data) {
-      setTokenData({
-        assigned_tokens: data.assigned_tokens || 0,
-        bonus_tokens: data.bonus_tokens || 0,
-        total_tokens: data.total_tokens || 0,
-        remaining_tokens: data.remaining_tokens || 0,
-        current_rate: data.current_rate || 0,
-        is_approved: Boolean(data.is_approved),
-      });
-    }
-
-    setLoading(false);
-  };
+export default async function TokensPage() {
+  const { profile: tokenData } = await requireActiveAccount();
 
   const usedTokens = Math.max(
     tokenData.total_tokens - tokenData.remaining_tokens,
@@ -84,13 +14,9 @@ export default function TokensPage() {
       ? Math.min(100, (usedTokens / tokenData.total_tokens) * 100)
       : 0;
 
-  if (loading) {
-    return <LoadingCard label="Loading tokens..." />;
-  }
-
   return (
     <div className="space-y-8">
-      <div className="rounded-2xl border border-white/10 bg-white/[0.07] p-6 shadow-2xl shadow-blue-950/20 backdrop-blur-xl md:p-8">
+      <div className="workspace-panel rounded-2xl border border-white/10 bg-white/[0.07] p-6 shadow-2xl shadow-blue-950/20 backdrop-blur-xl md:p-8">
         <StatusBadge
           status={tokenData.is_approved ? "approved" : "pending"}
           label={tokenData.is_approved ? "Approved account" : "Pending approval"}
@@ -103,12 +29,6 @@ export default function TokensPage() {
           profile.
         </p>
       </div>
-
-      {message && (
-        <div className="rounded-xl border border-rose-300/25 bg-rose-500/10 p-4 text-rose-100">
-          {message}
-        </div>
-      )}
 
       {!tokenData.is_approved && (
         <div className="rounded-2xl border border-amber-300/25 bg-amber-400/10 p-5 text-amber-100">
@@ -153,7 +73,7 @@ export default function TokensPage() {
       </div>
 
       <section
-        className={`rounded-2xl border border-white/10 bg-white/[0.07] p-6 shadow-2xl shadow-blue-950/20 backdrop-blur-xl transition ${
+        className={`workspace-panel rounded-2xl border border-white/10 bg-white/[0.07] p-6 shadow-2xl shadow-blue-950/20 backdrop-blur-xl transition ${
           !tokenData.is_approved ? "opacity-60" : ""
         }`}
       >
@@ -172,13 +92,13 @@ export default function TokensPage() {
 
         <div className="mt-5 h-4 overflow-hidden rounded-full bg-white/10">
           <div
-            className="h-full rounded-full bg-gradient-to-r from-sky-300 to-indigo-300"
+            className="h-full rounded-full bg-gradient-to-r from-cyan-200 to-teal-400"
             style={{ width: `${usagePercentage}%` }}
           />
         </div>
       </section>
 
-      <section className="rounded-2xl border border-white/10 bg-white/[0.07] p-6 shadow-2xl shadow-blue-950/20 backdrop-blur-xl">
+      <section className="workspace-panel rounded-2xl border border-white/10 bg-white/[0.07] p-6 shadow-2xl shadow-blue-950/20 backdrop-blur-xl">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="text-xl font-semibold text-white">Recent Activity</h2>

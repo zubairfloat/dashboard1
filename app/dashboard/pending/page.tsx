@@ -1,112 +1,20 @@
-"use client";
-
-import { useEffect, useState } from "react";
 import type { ComponentType } from "react";
 import type { LucideProps } from "lucide-react";
 import { Clock3, MailCheck, ShieldCheck } from "lucide-react";
-import { supabase } from "@/lib/supabase/client";
-import { LoadingCard, StatusBadge } from "@/components/dashboard/ui";
+import { getRequestTime, requireActiveAccount } from "@/lib/dashboard-data";
+import { redirect } from "next/navigation";
+import Countdown from "@/components/dashboard/countdown";
+import { StatusBadge } from "@/components/dashboard/ui";
 
-interface CountdownState {
-  label: string;
-  expired: boolean;
-}
-
-export default function PendingPage() {
-  const [loading, setLoading] = useState(true);
-  const [deadline, setDeadline] = useState("");
-  const [timeLeft, setTimeLeft] = useState<CountdownState>({
-    label: "Preparing review window...",
-    expired: false,
-  });
-
-  useEffect(() => {
-    const loadCountdown = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      if (!user) {
-        window.location.href = "/login";
-        return;
-      }
-
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("is_deleted, is_approved, approval_deadline")
-        .eq("id", user.id)
-        .single();
-
-      if (!profile) {
-        setLoading(false);
-        return;
-      }
-
-      if (profile.is_deleted) {
-        window.location.href = "/dashboard/restricted";
-        return;
-      }
-
-      if (profile.is_approved) {
-        window.location.href = "/dashboard";
-        return;
-      }
-
-      setDeadline(profile.approval_deadline || "");
-      setLoading(false);
-    };
-
-    loadCountdown();
-  }, []);
-
-  useEffect(() => {
-    if (!deadline) {
-      setTimeLeft({
-        label: "Review deadline is not set yet",
-        expired: false,
-      });
-      return;
-    }
-
-    const updateCountdown = () => {
-      const diff = new Date(deadline).getTime() - Date.now();
-
-      if (Number.isNaN(diff)) {
-        setTimeLeft({ label: "Review deadline unavailable", expired: false });
-        return;
-      }
-
-      if (diff <= 0) {
-        setTimeLeft({ label: "Review window elapsed", expired: true });
-        return;
-      }
-
-      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-      const hours = Math.floor(
-        (diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60),
-      );
-      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-      const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-
-      setTimeLeft({
-        label: `${days}d ${hours}h ${minutes}m ${seconds}s`,
-        expired: false,
-      });
-    };
-
-    updateCountdown();
-    const interval = setInterval(updateCountdown, 1000);
-
-    return () => clearInterval(interval);
-  }, [deadline]);
-
-  if (loading) {
-    return <LoadingCard label="Loading review status..." />;
-  }
-
+export default async function PendingPage() {
+  const { profile } = await requireActiveAccount();
+  if (profile.is_admin || profile.is_approved) redirect("/dashboard");
+  const deadline = profile.approval_deadline;
+  const now = getRequestTime();
+  const timeLeft = { expired: Boolean(deadline && new Date(deadline).getTime() <= now) };
   return (
     <main className="flex min-h-[85vh] items-center justify-center px-4 py-10">
-      <div className="w-full max-w-4xl overflow-hidden rounded-2xl border border-white/10 bg-white/[0.07] shadow-2xl shadow-blue-950/30 backdrop-blur-xl">
+      <div className="w-full max-w-4xl overflow-hidden workspace-panel rounded-2xl border border-white/10 bg-white/[0.07] shadow-2xl shadow-blue-950/30 backdrop-blur-xl">
         <div className="border-b border-white/10 p-6 md:p-8">
           <StatusBadge
             status={timeLeft.expired ? "pending" : "active"}
@@ -128,7 +36,7 @@ export default function PendingPage() {
               <h2 className="text-lg font-semibold">Approval Countdown</h2>
             </div>
             <p className="mt-5 text-4xl font-bold text-amber-200 md:text-5xl">
-              {timeLeft.label}
+              <Countdown deadline={deadline} initialNow={now} />
             </p>
             <p className="mt-4 text-sm text-amber-100/75">
               {timeLeft.expired
@@ -170,7 +78,7 @@ function ReviewStep({
   text: string;
 }) {
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
+    <div className="workspace-panel rounded-2xl border border-white/10 bg-white/5 p-5">
       <div className="flex items-start gap-3">
         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/10 text-blue-100">
           <Icon size={19} />

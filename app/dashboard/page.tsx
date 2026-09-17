@@ -1,139 +1,12 @@
-"use client";
-
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabase/client";
-import { ActionButton, LoadingCard, StatCard, StatusBadge } from "@/components/dashboard/ui";
+import { redirect } from "next/navigation";
+import { requireActiveAccount } from "@/lib/dashboard-data";
+import { ActionButton, StatCard, StatusBadge } from "@/components/dashboard/ui";
 import { ArrowRight, Coins, Gauge, Gift, Wallet } from "lucide-react";
 
-interface DashboardProfile {
-  username: string;
-  assigned_tokens: number;
-  bonus_tokens: number;
-  total_tokens: number;
-  remaining_tokens: number;
-  current_rate: number;
-}
-
-export default function DashboardPage() {
-  const router = useRouter();
-
-  const [loading, setLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState("");
-
-  const [profile, setProfile] = useState<DashboardProfile>({
-    username: "",
-    assigned_tokens: 0,
-    bonus_tokens: 0,
-    total_tokens: 0,
-    remaining_tokens: 0,
-    current_rate: 0,
-  });
-
-  useEffect(() => {
-    const checkUser = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      if (!user) {
-        router.push("/login");
-        return;
-      }
-
-      let { data: profile, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", user.id)
-        .maybeSingle();
-
-      if (error) {
-        setErrorMessage(error.message);
-        setLoading(false);
-        return;
-      }
-
-      if (!profile) {
-        const usernameBase =
-          user.email?.split("@")[0] ||
-          user.user_metadata?.full_name ||
-          user.user_metadata?.name ||
-          "user";
-        const safeUsernameBase =
-          usernameBase.replace(/[^a-zA-Z0-9_]/g, "_").slice(0, 24) || "user";
-        const username = `${safeUsernameBase}_${user.id.slice(0, 6)}`;
-
-        const approvalDeadline = new Date(
-          Date.now() + 72 * 60 * 60 * 1000,
-        ).toISOString();
-
-        const { data: insertedProfile, error: insertError } = await supabase
-          .from("profiles")
-          .upsert({
-            id: user.id,
-            username,
-            email: user.email || "",
-            is_approved: false,
-            approval_deadline: approvalDeadline,
-          })
-          .select("*")
-          .single();
-
-        if (insertError || !insertedProfile) {
-          setErrorMessage(
-            insertError?.message || "Unable to prepare your dashboard profile.",
-          );
-          setLoading(false);
-          return;
-        }
-
-        profile = insertedProfile;
-      }
-
-      // Super Admin
-      if (profile.is_admin) {
-        router.push("/dashboard/admin");
-        return;
-      }
-
-      // Restricted User
-      if (profile.is_deleted) {
-        router.push("/dashboard/restricted");
-        return;
-      }
-
-      // Pending User
-      if (!profile.is_approved) {
-        router.push("/dashboard/pending");
-        return;
-      }
-
-      // Approved User
-      setProfile({
-        username: profile.username || "",
-        assigned_tokens: profile.assigned_tokens || 0,
-        bonus_tokens: profile.bonus_tokens || 0,
-        total_tokens: profile.total_tokens || 0,
-        remaining_tokens: profile.remaining_tokens || 0,
-        current_rate: profile.current_rate || 0,
-      });
-      setLoading(false);
-    };
-
-    checkUser();
-  }, [router]);
-
-  if (loading) {
-    return <LoadingCard label="Loading dashboard..." />;
-  }
-
-  if (errorMessage) {
-    return (
-      <div className="rounded-2xl border border-rose-400/25 bg-rose-500/10 p-6 text-rose-100">
-        {errorMessage}
-      </div>
-    );
-  }
+export default async function DashboardPage() {
+  const { profile } = await requireActiveAccount();
+  if (profile.is_admin) redirect("/dashboard/admin");
+  if (!profile.is_approved) redirect("/dashboard/pending");
 
   const usedTokens = Math.max(profile.total_tokens - profile.remaining_tokens, 0);
   const usage =
@@ -143,7 +16,7 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-8">
-      <div className="rounded-2xl border border-white/10 bg-white/[0.07] p-6 shadow-2xl shadow-blue-950/20 backdrop-blur-xl md:p-8">
+      <div className="workspace-panel rounded-2xl border border-white/10 bg-white/[0.07] p-6 shadow-2xl shadow-blue-950/20 backdrop-blur-xl md:p-8">
         <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
           <div>
             <StatusBadge status="active" label="Approved workspace" />
@@ -190,14 +63,14 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
-        <section className="rounded-2xl border border-white/10 bg-white/[0.07] p-6 shadow-2xl shadow-blue-950/20 backdrop-blur-xl">
+        <section className="workspace-panel rounded-2xl border border-white/10 bg-white/[0.07] p-6 shadow-2xl shadow-blue-950/20 backdrop-blur-xl">
           <div className="flex items-center justify-between gap-4">
             <div>
               <h2 className="text-xl font-semibold text-white">
                 Token Information
               </h2>
               <p className="mt-1 text-sm text-blue-100/60">
-                Live values from your Supabase profile.
+                Your current balance and token usage.
               </p>
             </div>
             <span className="rounded-full border border-white/10 bg-white/10 px-3 py-1 text-sm font-semibold text-blue-100">
@@ -225,14 +98,14 @@ export default function DashboardPage() {
             </div>
             <div className="h-3 overflow-hidden rounded-full bg-white/10">
               <div
-                className="h-full rounded-full bg-gradient-to-r from-sky-300 to-indigo-300"
+                className="h-full rounded-full bg-gradient-to-r from-cyan-200 to-teal-400"
                 style={{ width: `${usage}%` }}
               />
             </div>
           </div>
         </section>
 
-        <section className="rounded-2xl border border-white/10 bg-white/[0.07] p-6 shadow-2xl shadow-blue-950/20 backdrop-blur-xl">
+        <section className="workspace-panel rounded-2xl border border-white/10 bg-white/[0.07] p-6 shadow-2xl shadow-blue-950/20 backdrop-blur-xl">
           <h2 className="text-xl font-semibold text-white">Quick Actions</h2>
           <div className="mt-5 space-y-3">
             <ActionButton href="/dashboard/tokens" tone="neutral" className="w-full justify-between">
@@ -248,7 +121,7 @@ export default function DashboardPage() {
         </section>
       </div>
 
-      <section className="rounded-2xl border border-white/10 bg-white/[0.07] p-6 shadow-2xl shadow-blue-950/20 backdrop-blur-xl">
+      <section className="workspace-panel rounded-2xl border border-white/10 bg-white/[0.07] p-6 shadow-2xl shadow-blue-950/20 backdrop-blur-xl">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="text-xl font-semibold text-white">Recent Activity</h2>

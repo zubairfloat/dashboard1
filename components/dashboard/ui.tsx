@@ -1,5 +1,3 @@
-"use client";
-
 import Link from "next/link";
 import type { ComponentType, ReactNode } from "react";
 import type { LucideProps } from "lucide-react";
@@ -39,7 +37,7 @@ export function StatCard({
   tone = "blue",
 }: StatCardProps) {
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/[0.07] p-5 shadow-2xl shadow-blue-950/20 backdrop-blur-xl transition hover:border-white/20 hover:bg-white/[0.09]">
+    <div className="workspace-panel workspace-stat rounded-2xl border border-white/10 bg-white/[0.07] p-5 shadow-2xl shadow-blue-950/20 backdrop-blur-xl transition hover:border-white/20 hover:bg-white/[0.09]">
       <div className="flex items-start justify-between gap-4">
         <div>
           <p className="text-sm font-medium text-blue-100/65">{title}</p>
@@ -115,7 +113,7 @@ export function UserAvatar({
   return (
     <div
       className={cn(
-        "flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-white to-blue-100 font-bold text-blue-950 shadow-lg shadow-blue-950/20",
+        "flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-cyan-100 to-teal-200 font-bold text-blue-950 shadow-lg shadow-blue-950/20",
         className,
       )}
     >
@@ -134,7 +132,7 @@ interface ActionButtonProps {
 }
 
 const actionStyles: Record<NonNullable<ActionButtonProps["tone"]>, string> = {
-  primary: "bg-blue-500 text-white hover:bg-blue-400",
+  primary: "bg-[#a9e8ed] text-[#102b3b] hover:bg-[#c5f3f5]",
   success: "bg-emerald-500 text-white hover:bg-emerald-400",
   warning: "bg-amber-500 text-blue-950 hover:bg-amber-400",
   danger: "bg-rose-500 text-white hover:bg-rose-400",
@@ -150,7 +148,7 @@ export function ActionButton({
   className,
 }: ActionButtonProps) {
   const classes = cn(
-    "inline-flex min-h-10 items-center justify-center rounded-xl px-4 py-2 text-sm font-semibold transition focus:outline-none focus:ring-2 focus:ring-blue-300/60 disabled:cursor-not-allowed disabled:opacity-45",
+    "workspace-action inline-flex min-h-11 items-center justify-center rounded-xl px-4 py-2 text-sm font-semibold transition focus:outline-none focus:ring-2 focus:ring-blue-300/60 disabled:cursor-not-allowed disabled:opacity-45",
     actionStyles[tone],
     className,
   );
@@ -176,7 +174,7 @@ export function ActionButton({
 export function LoadingCard({ label = "Loading..." }: { label?: string }) {
   return (
     <div className="flex min-h-[50vh] items-center justify-center">
-      <div className="rounded-2xl border border-white/10 bg-white/[0.07] px-6 py-5 text-white shadow-2xl shadow-blue-950/20 backdrop-blur-xl">
+      <div className="workspace-panel rounded-2xl border border-white/10 bg-white/[0.07] px-6 py-5 text-white shadow-2xl shadow-blue-950/20 backdrop-blur-xl">
         <div className="flex items-center gap-3">
           <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-sky-300" />
           <span className="text-sm font-medium text-blue-100">{label}</span>

@@ -1,4 +1,7 @@
-export default function PackagesPage() {
+import { requireActiveAccount } from "@/lib/dashboard-data";
+
+export default async function PackagesPage() {
+  await requireActiveAccount();
   return (
     <div>
       {/* Header */}
@@ -14,7 +17,7 @@ export default function PackagesPage() {
 
       {/* Summary Cards */}
       <div className="mb-8 grid gap-6 md:grid-cols-3">
-        <div className="rounded-3xl border border-white/10 bg-white/5 p-6 backdrop-blur-xl">
+        <div className="workspace-panel rounded-3xl border border-white/10 bg-white/5 p-6 backdrop-blur-xl">
           <h3 className="text-sm text-blue-100/60">
             Total Packages
           </h3>
@@ -24,7 +27,7 @@ export default function PackagesPage() {
           </p>
         </div>
 
-        <div className="rounded-3xl border border-white/10 bg-white/5 p-6 backdrop-blur-xl">
+        <div className="workspace-panel rounded-3xl border border-white/10 bg-white/5 p-6 backdrop-blur-xl">
           <h3 className="text-sm text-blue-100/60">
             Active
           </h3>
@@ -34,7 +37,7 @@ export default function PackagesPage() {
           </p>
         </div>
 
-        <div className="rounded-3xl border border-white/10 bg-white/5 p-6 backdrop-blur-xl">
+        <div className="workspace-panel rounded-3xl border border-white/10 bg-white/5 p-6 backdrop-blur-xl">
           <h3 className="text-sm text-blue-100/60">
             Expired
           </h3>
@@ -46,13 +49,13 @@ export default function PackagesPage() {
       </div>
 
       {/* Packages Table */}
-      <div className="rounded-3xl border border-white/10 bg-white/5 p-6 backdrop-blur-xl">
-        <div className="mb-6 flex items-center justify-between">
+      <div className="workspace-panel rounded-3xl border border-white/10 bg-white/5 p-6 backdrop-blur-xl">
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
           <h2 className="text-2xl font-semibold text-white">
             Package List
           </h2>
 
-          <button className="rounded-xl bg-white px-5 py-2 font-medium text-blue-900 transition hover:bg-slate-200">
+          <button className="workspace-action rounded-xl bg-[#a9e8ed] px-5 py-2 font-medium text-blue-900 transition hover:bg-slate-200">
             + New Package
           </button>
         </div>

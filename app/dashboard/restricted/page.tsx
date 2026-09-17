@@ -1,6 +1,11 @@
 import { LifeBuoy, ShieldOff } from "lucide-react";
 
-export default function RestrictedPage() {
+import { getAccount } from "@/lib/dashboard-data";
+import { redirect } from "next/navigation";
+
+export default async function RestrictedPage() {
+  const { profile } = await getAccount();
+  if (!profile.is_deleted) redirect("/dashboard");
   return (
     <div className="flex min-h-[85vh] items-center justify-center px-4 py-10">
       <div className="w-full max-w-3xl rounded-2xl border border-rose-300/25 bg-rose-500/10 p-6 shadow-2xl shadow-blue-950/30 backdrop-blur-xl md:p-8">
@@ -18,7 +23,7 @@ export default function RestrictedPage() {
           reviews and restores your account.
         </p>
 
-        <div className="mt-6 rounded-2xl border border-white/10 bg-white/5 p-5">
+        <div className="mt-6 workspace-panel rounded-2xl border border-white/10 bg-white/5 p-5">
           <div className="flex items-start gap-3">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/10 text-blue-100">
               <LifeBuoy size={20} />

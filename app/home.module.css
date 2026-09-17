@@ -1,0 +1,10 @@
+.page { min-height:100svh; color:#f5f7ff; background:radial-gradient(ellipse at top left,#173a68,transparent 55%),#090f23; }
+.page a { transition:color .2s,background .2s,transform .2s; }
+.page a:hover { color:#a9e8ed; }
+.page a[class*="bg-"]:hover { color:#102b3b; background:#c5f3f5; transform:translateY(-2px); }
+.page a:focus-visible { outline:2px solid #a9e8ed; outline-offset:5px; }
+.page section>div { animation:appear .6s ease-out both; }
+.page div[class*="rounded-3xl"] { background:linear-gradient(145deg,#202c47,#121a30); transition:transform .2s,border-color .2s; }
+.page div[class*="rounded-3xl"]:hover { transform:translateY(-3px); border-color:#a9e8ed40; }
+@keyframes appear { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+@media(prefers-reduced-motion:reduce) { .page * { animation:none!important; transition:none!important; } }
