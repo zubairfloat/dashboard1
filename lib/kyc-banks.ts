@@ -145,6 +145,9 @@ export function validateKycBank(country: string, bank: string, otherBank: string
   if (!iban.startsWith(country)) return "The IBAN must belong to the selected country. Check your country and IBAN.";
   const lengths: Record<string, number> = { PK: 24, AE: 23, SA: 24, GB: 22 };
   if (lengths[country] && iban.length !== lengths[country]) return `The IBAN for this country must contain ${lengths[country]} characters.`;
+  // Pakistan intentionally checks format only, regardless of the selected bank.
+  if (country === "PK") return /^PK[0-9]{2}[A-Z]{4}[A-Z0-9]{16}$/.test(iban)
+    ? null : "Use Pakistan IBAN format: PK, 2 digits, 4 bank-code letters and 16 account characters.";
   const rearranged = iban.slice(4) + iban.slice(0, 4);
   let remainder = 0;
   for (const character of rearranged) {

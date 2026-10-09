@@ -40,5 +40,16 @@ test('Pakistan requires exactly 24 characters excluding spaces before Continue c
     assert.match(validateKycBank('PK', 'Standard Chartered Pakistan', '', value), /exactly 24 characters/);
   }
   assert.equal(validateKycBank('PK', 'Standard Chartered Pakistan', '', 'pk36 scbl 0000 0011 2345 6702'), null);
-  assert.match(validateKycBank('PK', 'Standard Chartered Pakistan', '', 'PK37SCBL0000001123456702'), /checksum/);
+  assert.equal(validateKycBank('PK', 'Standard Chartered Pakistan', '', 'PK37SCBL0000001123456702'), null);
+});
+
+test('Pakistan accepts Meezan and UBL format-only entries without checksum or bank matching', () => {
+  for (const bank of getKycBanks('PK')) {
+    for (const value of ['PK10MEZN0001011234567890', 'PK16UNIL0112094910113152']) {
+      assert.equal(validateKycBank('PK', bank, '', value), null);
+    }
+  }
+  for (const value of ['PK10M3ZN0001011234567890', 'PKAAMEZN0001011234567890', 'AE10MEZN0001011234567890', 'PK10MEZN000101123456789!']) {
+    assert.ok(validateKycBank('PK', 'Meezan Bank', '', value));
+  }
 });

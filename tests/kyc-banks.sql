@@ -32,6 +32,15 @@ begin
   exception when raise_exception then
     if SQLERRM <> 'Submitted bank details cannot be changed' then raise; end if;
   end;
+  insert into kyc_bank_test values
+    ('Meezan Bank', 'PK10MEZN0001011234567890', 'PK'),
+    ('United Bank Limited (UBL)', 'PK16UNIL0112094910113152', 'PK');
+  begin
+    insert into kyc_bank_test values ('Meezan Bank', 'PK10M3ZN0001011234567890', 'PK');
+    raise exception 'TEST FAILED: malformed Pakistan bank code accepted';
+  exception when raise_exception then
+    if SQLERRM <> 'Invalid Pakistan IBAN format' then raise; end if;
+  end;
   update kyc_bank_test set country_code=country_code;
   if not has_column_privilege('authenticated', 'public.kyc_submissions', 'iban', 'INSERT')
     or has_column_privilege('authenticated', 'public.kyc_submissions', 'iban', 'UPDATE') then

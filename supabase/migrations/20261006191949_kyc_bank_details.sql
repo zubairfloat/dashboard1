@@ -34,6 +34,13 @@ begin
   if expected_length is not null and length(new.iban) <> expected_length then
     raise exception 'Incorrect IBAN length for selected country';
   end if;
+  -- Pakistan is format-only by product policy; do not verify bank or checksum.
+  if new.country_code = 'PK' then
+    if new.iban !~ '^PK[0-9]{2}[A-Z]{4}[A-Z0-9]{16}$' then
+      raise exception 'Invalid Pakistan IBAN format';
+    end if;
+    return new;
+  end if;
   rearranged := substr(new.iban, 5) || left(new.iban, 4);
   for i in 1..length(rearranged) loop
     character := substr(rearranged, i, 1);
