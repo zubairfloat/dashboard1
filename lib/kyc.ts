@@ -18,6 +18,8 @@ export function getKycDocument(type: KycDocumentType | undefined) {
 export type KycSubmission = {
   id: string; user_id: string; full_name: string; country: string;
   country_code: string | null;
+  bank_name: string | null;
+  iban: string | null;
   document_type: KycDocumentType;
   status: "pending" | "verified" | "rejected";
   rejection_reason: string | null; created_at: string; reviewed_at: string | null;

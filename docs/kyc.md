@@ -2,7 +2,7 @@
 
 ## Using the feature
 
-- Users: open **KYC Verification** in the sidebar or profile. Select the issuing country, then National ID Card, Passport or Driving License. Enter the name on the document. Passports require the photo/details page; IDs and driving licenses require front and back. Upload JPG, JPEG, PNG or PDF files (maximum 5 MB each), accept the review consent and submit.
+- Users: open **KYC Verification** in the sidebar or profile. Select the country, choose a bank (or enter an unlisted bank), and enter an IBAN. Continue to documents, then choose National ID Card, Passport or Driving License. Enter the name on the document. Passports require the photo/details page; IDs and driving licenses require front and back. Upload JPG, JPEG, PNG or PDF files (maximum 5 MB each), accept the review consent and submit.
 - Reviewers: **Admin Panel → Review KYC submissions**. Open all required documents, review the selected country and document type, then approve or reject with feedback. Images preview inline; PDFs download privately for review. Approved IDs do not automatically approve the general account.
 - Rejected users can submit new photos. Each attempt keeps its own immutable record, reviewer ID and review timestamp.
 
@@ -69,3 +69,23 @@ Migration `20260916220633_kyc_document_types.sql` adds country codes and documen
 This initial version offers the same three document types for all countries. Country-specific acceptance rules, document numbers, expiry dates and documents without expiry dates are deferred. Admin accounts remain exempt from personal KYC.
 
 File validation tests: `node --test tests/kyc-files.cjs`. Run `tests/kyc-document-types.sql` after `tests/kyc-rls.sql` in a rolled-back transaction to verify country validation and required files for each type.
+
+## Bank details
+
+The form now has two steps: country → bank → IBAN, then identity documents. Changing the country clears the bank and IBAN. Going back to bank details clears document inputs, so files must be selected again. The selected country applies to both the bank account and identity document.
+
+The curated directory in `lib/kyc-banks.ts` contains 89 bank options across Pakistan, UAE, Saudi Arabia, UK, Qatar, Oman, Kuwait, France and Spain. It is not a complete global directory; every country includes “Other bank” for manual entry. Sources: [State Bank of Pakistan](https://www.sbp.org.pk/our-subsidiaries/raast/raast-person-to-person), [CBUAE](https://centralbank.ae/en/licensing), [SAMA](https://sama.gov.sa/en-US/Supervision/LicenseEntities/Pages/default.aspx), and [Bank of England](https://www.bankofengland.co.uk/payment-and-settlement/chaps). Update this directory as coverage expands.
+
+IBAN input is normalized to uppercase without whitespace and checked for country prefix, basic format and mod-97 checksum in both the browser and database. Pakistan, UAE, Saudi Arabia and the UK also have exact length checks. This does not verify account ownership, bank-to-IBAN matching or account existence. Domestic account numbers for banks that do not issue IBANs are not supported by this IBAN-only flow.
+
+`bank_name` and `iban` remain on the private, RLS-protected submission. Authorized reviewers can see them; emails do not include them. Existing submissions retain null bank fields and remain reviewable. New submissions require bank details, which cannot be changed after submission.
+
+Deployment: apply `supabase/migrations/20261006191949_kyc_bank_details.sql` together with deploying the updated application. The migration has been tested in a rolled-back transaction on the configured project, but has not been applied permanently: applying it alone would make the currently deployed form unable to submit without bank fields.
+
+Validation: `node --test tests/kyc-banks.cjs tests/kyc-files.cjs`, TypeScript and targeted ESLint checks. Run `tests/kyc-rls.sql`, `tests/kyc-document-types.sql`, `tests/kyc-notifications.sql` and `tests/kyc-banks.sql` in that order within a transaction after the migration, then roll back. Fixtures use synthetic bank details; no emails are sent.
+
+Additional bank-directory sources: [Qatar Central Bank](https://www.qcb.gov.qa/en/Pages/Retail-payment-systems.aspx), [Central Bank of Oman](https://cbo.gov.om/Pages/LicensedBanks.aspx), [Central Bank of Kuwait](https://www.cbk.gov.kw/en/supervision/regulated-entities/kuwaiti-banks/conventional-banks), [Banque de France](https://acpr.banque-france.fr/fr/actualites/analyses-et-syntheses-situation-des-grands-groupes-bancaires-francais), [Banco de España](https://www.bde.es/app/sif/es/publicacion/intercambio/), [UK PRA register](https://www.bankofengland.co.uk/prudential-regulation/authorisations/which-firms-does-the-pra-regulate), and [CBUAE Islamic banks](https://centralbank.ae/en/our-operations/islamic-finance/islamic-banking/). These are manually maintained options, not a live bank feed.
+
+### Bank logos
+
+The picker and selected-bank field use 73 locally stored brand icons downloaded from bank websites. `public/banks/sources.json` records each country, bank, source website, image URL, and asset path; 16 unavailable logos use the generic bank icon. `lib/kyc-bank-logos.ts` keys the lookup by country and bank name to distinguish similarly named banks. An image loading error also displays the fallback. No external logo service or browser request to a bank website is required. These assets identify the banks; they do not imply endorsement.

@@ -86,6 +86,7 @@ function ReviewCard({ item, onReviewed }: { item: KycSubmission; onReviewed: () 
   }
   return <article className="space-y-4 workspace-panel rounded-3xl border border-white/10 bg-white/5 p-6">
     <div><h2 className="text-xl font-semibold">{item.full_name}</h2><p className="mt-1 text-sm text-blue-100/70">{item.country} · {document.label} · {formatDateTime(item.created_at)}</p><p className="mt-1 break-all text-xs text-blue-100/50">Account: {item.user_id}</p><p className="mt-3 text-sm font-medium text-sky-200">{item.status === "pending" ? "Documents submitted — Under admin review" : item.status === "verified" ? "Approved — KYC Verified" : "Rejected — Action Required"}</p></div>
+    {item.bank_name && <dl className="rounded-xl border border-white/10 p-4 text-sm"><dt className="text-blue-100/60">Bank</dt><dd>{item.bank_name}</dd><dt className="mt-2 text-blue-100/60">IBAN</dt><dd className="break-all font-mono">{item.iban}</dd></dl>}
     <button disabled={busy} onClick={() => photos.length ? setPhotos([]) : void viewPhotos()} className="rounded-xl border border-white/15 px-4 py-2 disabled:opacity-40">{photos.length ? "Hide documents" : busy ? "Loading…" : "View documents"}</button>
     {loadingDocuments && <DocumentsSkeleton count={requiredCount} />}
     {photos.length > 0 && <div className="grid gap-4 md:grid-cols-2">{photos.map(file => <figure key={file.url}>
