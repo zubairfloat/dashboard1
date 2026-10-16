@@ -2,7 +2,7 @@
 
 ## Using the feature
 
-- Users: open **KYC Verification** in the sidebar or profile. Select the country, choose a bank (or enter an unlisted bank), and enter an IBAN. Continue to documents, then choose National ID Card, Passport or Driving License. Enter the name on the document. Passports require the photo/details page; IDs and driving licenses require front and back. Upload JPG, JPEG, PNG or PDF files (maximum 5 MB each), accept the review consent and submit.
+- Users: open **KYC Verification** in the sidebar or profile. Select the country, choose a bank (or enter an unlisted bank), and enter an IBAN and the mandatory Account Holder Name exactly as registered with the bank. Continue to documents, then choose National ID Card, Passport or Driving License. Enter the name on the document. Passports require the photo/details page; IDs and driving licenses require front and back. Upload JPG, JPEG, PNG or PDF files (maximum 5 MB each), accept the review consent and submit.
 - Reviewers: **Admin Panel → Review KYC submissions**. Open all required documents, review the selected country and document type, then approve or reject with feedback. Images preview inline; PDFs download privately for review. Approved IDs do not automatically approve the general account.
 - Rejected users can submit new photos. Each attempt keeps its own immutable record, reviewer ID and review timestamp.
 
@@ -89,3 +89,13 @@ Additional bank-directory sources: [Qatar Central Bank](https://www.qcb.gov.qa/e
 ### Bank logos
 
 The picker and selected-bank field use 73 locally stored brand icons downloaded from bank websites. `public/banks/sources.json` records each country, bank, source website, image URL, and asset path; 16 unavailable logos use the generic bank icon. `lib/kyc-bank-logos.ts` keys the lookup by country and bank name to distinguish similarly named banks. An image loading error also displays the fallback. No external logo service or browser request to a bank website is required. These assets identify the banks; they do not imply endorsement.
+
+Account holder name: deploy `supabase/migrations/20261016190935_kyc_account_holder_name.sql` together with the form update. New submissions require a non-blank name; historic submissions remain readable and reviewable without one. The name is stored separately from the document name and shown to reviewers. This migration has not been applied to the hosted database.
+
+Optional details: `supabase/migrations/20261016195504_kyc_optional_details.sql` adds nullable crypto wallet and residential address objects to the existing RLS-protected KYC table. Deploy it with the application (after the account holder migration). No hosted migration was applied during this change. Only the owner and authorized KYC reviewers can read the row; authenticated clients receive INSERT permission for the new columns, never UPDATE. The trigger validates direct API inserts and prevents later edits while allowing normal status reviews.
+
+Both sections start collapsed. Crypto is omitted unless enabled; unchecking it omits any retained draft. BTC supports Bitcoin, ETH supports Ethereum/BEP20, and USDT supports Ethereum/TRC20/BEP20. Validation checks address format only, not checksum, ownership, balances or activity. Address information is omitted when entirely blank; partial entries require line 1, city and country, with state and postal code optional where not applicable. Clear residential address removes the entire address. Drafts survive navigation between form steps but are not persisted to browser storage.
+
+Checks: `node --test tests/kyc-optional.cjs tests/kyc-banks.cjs`; database regression: `tests/kyc-optional.sql` (run after migration).
+
+The optional-details migration and SQL regression were verified with an isolated PGlite Postgres instance, including the existing `kyc_read` policy with simulated owner, unrelated-user, reviewer and anonymous roles. Hosted Supabase deployment and browser interaction were not exercised. Format references: [Ethereum accounts](https://ethereum.org/developers/docs/accounts), [TRON addresses](https://developers.tron.network/docs/account), [Bitcoin witness addresses](https://bips.dev/350/).

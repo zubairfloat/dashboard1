@@ -1,3 +1,5 @@
+import type { CryptoWallet, ResidentialAddress } from "./kyc-optional";
+
 export const KYC_BUCKET = "kyc-documents";
 export const MAX_KYC_FILE_BYTES = 5 * 1024 * 1024;
 export const KYC_FILE_ACCEPT = ".jpg,.jpeg,.png,.pdf,image/jpeg,image/png,application/pdf";
@@ -20,6 +22,9 @@ export type KycSubmission = {
   country_code: string | null;
   bank_name: string | null;
   iban: string | null;
+  account_holder_name: string | null;
+  crypto_wallet: CryptoWallet | null;
+  residential_address: ResidentialAddress | null;
   document_type: KycDocumentType;
   status: "pending" | "verified" | "rejected";
   rejection_reason: string | null; created_at: string; reviewed_at: string | null;

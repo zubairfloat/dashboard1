@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { KycOptionalDetails } from "./kyc-optional-details";
+import { emptyAddress, normalizeAddress, validateOptionalDetails, type CryptoWallet } from "@/lib/kyc-optional";
 import { KycPicker } from "./kyc-picker";
 import { Skeleton } from "../skeleton";
 import { useState } from "react";
@@ -25,6 +27,14 @@ export default function PersonalKycForm() {
   const [bank, setBank] = useState("");
   const [otherBank, setOtherBank] = useState("");
   const [iban, setIban] = useState("");
+  const [accountHolderName, setAccountHolderName] = useState("");
+  const [cryptoEnabled, setCryptoEnabled] = useState(false);
+  const [wallet, setWallet] = useState<CryptoWallet>({ cryptocurrency: "", network: "", address: "" });
+  const [residentialAddress, setResidentialAddress] = useState({ ...emptyAddress });
+  const [optionalAttempted, setOptionalAttempted] = useState(false);
+  const cryptoWallet = cryptoEnabled ? { ...wallet, address: wallet.address.trim() } : null;
+  const normalizedAddress = normalizeAddress(residentialAddress);
+  const optionalError = validateOptionalDetails(cryptoWallet, normalizedAddress);
   const [step, setStep] = useState<"bank" | "documents">("bank");
   const banks = getKycBanks(countryCode);
   const ibanExample = getKycIbanExample(countryCode);
@@ -41,6 +51,9 @@ export default function PersonalKycForm() {
     if (busy) return;
     const bankError = validateKycBank(countryCode, bank, otherBank, iban);
     if (bankError) { setMessage(bankError); return; }
+    if (!accountHolderName.trim()) { setMessage("Enter the account holder name registered with your bank account."); return; }
+    setOptionalAttempted(true);
+    if (optionalError) { setMessage(optionalError); return; }
     if (step === "bank") { setStep("documents"); setMessage(""); return; }
     const values = new FormData(event.currentTarget);
     setBusy(true);
@@ -65,7 +78,8 @@ export default function PersonalKycForm() {
       }
       const { data, error } = await supabase.from("kyc_submissions").insert({
         id, user_id: user.id, full_name: fullName, country: country.name, country_code: country.code, document_type: documentType,
-        bank_name: bank === "other" ? otherBank.trim() : bank, iban: normalizeIban(iban),
+        bank_name: bank === "other" ? otherBank.trim() : bank, iban: normalizeIban(iban), account_holder_name: accountHolderName.trim(),
+        crypto_wallet: cryptoWallet, residential_address: normalizedAddress,
       }).select("*").single();
       if (error || !data) throw new Error("Submission could not be confirmed. Refresh your status before trying again.");
       setSubmitted(data);
@@ -128,8 +142,13 @@ export default function PersonalKycForm() {
             </span>
             <span id="kyc-iban-help" className="mt-2 block text-xs text-blue-100/60">{ibanExample && <span className="mb-3 block rounded-xl border border-white/10 bg-white/[0.03] p-3 font-mono leading-6 text-blue-100/75">Example format: {ibanExample} (example only — enter your own IBAN).</span>}The country prefix ({countryCode}) is filled in for you. Enter the check digits and remaining account details from your bank statement, or paste your full IBAN. Spaces are accepted. If your bank does not issue IBANs, contact your administrator.</span>
           </label>}
+          {bank && <label className="block text-sm text-blue-100"><span className="font-medium">Account Holder Name</span>
+            <input name="account_holder_name" required value={accountHolderName} onChange={event => { setAccountHolderName(event.target.value); setMessage(""); }} autoComplete="name" aria-describedby="kyc-account-holder-help" className={inputClass} />
+            <span id="kyc-account-holder-help" className="mt-2 block text-xs leading-5 text-blue-100/60">Please ensure that the account holder name matches the name registered with your bank account. Any mismatch may result in verification delays or rejection.</span>
+          </label>}
         </>}
-        <button type="submit" disabled={Boolean(bankDetailsError)} className="workspace-action flex w-full items-center justify-center gap-3 rounded-xl bg-[#a9e8ed] px-6 py-3.5 font-semibold text-blue-950 transition hover:bg-sky-200 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto">Continue to documents <ArrowRight size={18} aria-hidden="true" /></button>
+        <KycOptionalDetails enabled={cryptoEnabled} onEnabled={setCryptoEnabled} wallet={wallet} onWallet={setWallet} address={residentialAddress} onAddress={setResidentialAddress} error={optionalAttempted ? optionalError : null} />
+        <button type="submit" disabled={Boolean(bankDetailsError) || !accountHolderName.trim()} className="workspace-action flex w-full items-center justify-center gap-3 rounded-xl bg-[#a9e8ed] px-6 py-3.5 font-semibold text-blue-950 transition hover:bg-sky-200 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto">Continue to documents <ArrowRight size={18} aria-hidden="true" /></button>
         </>}
         {step === "documents" && <>
         <div className="rounded-xl border border-white/10 p-4 text-sm text-blue-100"><p>{KYC_COUNTRIES.find(country => country.code === countryCode)?.name} · {bank === "other" ? otherBank : bank}</p><p className="mt-1">IBAN ending in {normalizeIban(iban).slice(-4)}</p><button type="button" onClick={() => { setStep("bank"); setDocumentType(""); setMessage(""); }} className="mt-3 text-sky-300 underline">Back to bank details</button></div>
