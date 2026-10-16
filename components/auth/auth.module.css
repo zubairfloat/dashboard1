@@ -55,3 +55,5 @@
 @media(max-width:850px) { .layout { max-width:460px; grid-template-columns:1fr; gap:28px; } .intro { text-align:center; } .brand { margin-bottom:0; } .intro>.eyebrow,.intro h2,.intro>p,.feature { display:none; } .card { padding:28px; } }
 @media(max-width:380px) { .page { padding:28px 14px; } .card { padding:24px 20px; } .header h1 { font-size:26px; } }
 @media(prefers-reduced-motion:reduce) { .page *,.page *::before,.page *::after { animation:none!important; transition:none!important; } }
+.forgot { justify-self:end; color:#b4edef; font-size:13px; text-underline-offset:4px; }
+.forgot:hover { text-decoration:underline; }

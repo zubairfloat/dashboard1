@@ -13,6 +13,13 @@ export async function proxy(request: NextRequest) {
     redirect.headers.set("Cache-Control", "private, no-store");
     return redirect;
   }
+  // Let the callback exchange its code before any session refresh. Refreshing an
+  // expired session can clear the PKCE verifier needed for password recovery.
+  if (request.nextUrl.pathname === "/auth/callback") {
+    const response = NextResponse.next({ request });
+    response.headers.set("Cache-Control", "private, no-store");
+    return response;
+  }
   let response = NextResponse.next({ request });
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,

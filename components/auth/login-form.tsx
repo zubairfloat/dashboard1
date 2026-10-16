@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { migrateLegacySession } from "@/lib/supabase/legacy-session";
 import { supabase } from "@/lib/supabase/client";
@@ -59,6 +60,7 @@ export default function LoginPage() {
     <div className={styles.divider}>or sign in with email</div>
     <AuthField id="email" label="Email address" type="email" autoComplete="email" required placeholder="you@example.com" value={email} onChange={e => setEmail(e.target.value)} />
     <AuthField id="password" label="Password" type="password" autoComplete="current-password" required placeholder="Enter your password" value={password} onChange={e => setPassword(e.target.value)} />
+    <Link href="/forgot-password" className={styles.forgot}>Forgot password?</Link>
     {errorMessage && <div role="alert" className={styles.error}>{errorMessage}</div>}
     <button type="submit" disabled={loading} className={styles.primary}>{loading && <span aria-hidden="true" className={styles.spinner} />}<span>{loading ? "Signing in…" : "Sign in"}</span>{!loading && <span aria-hidden="true">→</span>}</button>
   </form>;
