@@ -22,7 +22,7 @@ export default function KycReviewContent({ initialItems, initialCount, requestId
     async function load() {
       const { data: permitted, error: permissionError } = await supabase.rpc("is_kyc_reviewer");
       if (permissionError || !permitted) throw new Error("Access is limited to authorized KYC reviewers.");
-      let query = supabase.from("kyc_submissions").select("*", { count: "exact" });
+      let query = supabase.from("kyc_submissions").select("*, bank_supplement:kyc_bank_supplements(*)", { count: "exact" });
       query = requestId ? query.eq("id", requestId) : query.eq("status", filter);
       const { data, error, count } = await query.order("created_at", { ascending: true }).range(requestId ? 0 : page * 10, requestId ? 0 : page * 10 + 9);
       if (error) throw new Error("Could not load submissions. Please try again.");
@@ -50,6 +50,7 @@ export default function KycReviewContent({ initialItems, initialCount, requestId
 function ReviewCard({ item, onReviewed }: { item: KycSubmission; onReviewed: () => void }) {
   const [photos, setPhotos] = useState<{ url: string; mime: string; label: string }[]>([]);
   const document = getKycDocument(item.document_type);
+  const bankDetails = item.bank_supplement || item;
   const requiredCount = document.uploads.length;
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -86,6 +87,10 @@ function ReviewCard({ item, onReviewed }: { item: KycSubmission; onReviewed: () 
   }
   return <article className="space-y-4 workspace-panel rounded-3xl border border-white/10 bg-white/5 p-6">
     <div><h2 className="text-xl font-semibold">{item.full_name}</h2><p className="mt-1 text-sm text-blue-100/70">{item.country} · {document.label} · {formatDateTime(item.created_at)}</p><p className="mt-1 break-all text-xs text-blue-100/50">Account: {item.user_id}</p><p className="mt-3 text-sm font-medium text-sky-200">{item.status === "pending" ? "Documents submitted — Under admin review" : item.status === "verified" ? "Approved — KYC Verified" : "Rejected — Action Required"}</p></div>
+    {item.bank_supplement && <p className="text-sm text-sky-200">Bank details added {formatDateTime(item.bank_supplement.created_at)} · Bank country: {item.bank_supplement.country_code}. Identity approval is unchanged; bank ownership has not been verified.</p>}
+    {bankDetails.bank_name && <dl className="rounded-xl border border-white/10 p-4 text-sm"><dt className="text-blue-100/60">Bank</dt><dd>{bankDetails.bank_name}</dd><dt className="mt-2 text-blue-100/60">IBAN</dt><dd className="break-all font-mono">{bankDetails.iban}</dd><dt className="mt-2 text-blue-100/60">Account Holder Name</dt><dd>{bankDetails.account_holder_name || "Not provided (historic submission)"}</dd></dl>}
+    {bankDetails.crypto_wallet && <section className="rounded-xl border border-white/10 p-4 text-sm"><h3 className="font-medium text-blue-100">Crypto Wallet Details</h3><p className="mt-2">{bankDetails.crypto_wallet.cryptocurrency} · {bankDetails.crypto_wallet.network}</p><p className="mt-1 break-all font-mono">{bankDetails.crypto_wallet.address}</p></section>}
+    {bankDetails.residential_address && <section className="rounded-xl border border-white/10 p-4 text-sm"><h3 className="font-medium text-blue-100">Residential Address</h3><p className="mt-2 whitespace-pre-line break-words">{[bankDetails.residential_address.line1, bankDetails.residential_address.line2, bankDetails.residential_address.city, bankDetails.residential_address.state, bankDetails.residential_address.postal_code, bankDetails.residential_address.country].filter(Boolean).join("\n")}</p></section>}
     <button disabled={busy} onClick={() => photos.length ? setPhotos([]) : void viewPhotos()} className="rounded-xl border border-white/15 px-4 py-2 disabled:opacity-40">{photos.length ? "Hide documents" : busy ? "Loading…" : "View documents"}</button>
     {loadingDocuments && <DocumentsSkeleton count={requiredCount} />}
     {photos.length > 0 && <div className="grid gap-4 md:grid-cols-2">{photos.map(file => <figure key={file.url}>

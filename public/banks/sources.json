@@ -1,0 +1,609 @@
+[
+  {
+    "country": "PK",
+    "bank": "Al Baraka Bank Pakistan",
+    "website": "https://albaraka.com.pk",
+    "source": "https://www.albaraka.com.pk/fav.png",
+    "path": "/banks/pk-01.png"
+  },
+  {
+    "country": "PK",
+    "bank": "Allied Bank",
+    "website": "https://abl.com",
+    "source": "https://www.abl.com/wp-content/uploads/2023/01/favicon.png",
+    "path": "/banks/pk-02.png"
+  },
+  {
+    "country": "PK",
+    "bank": "Askari Bank",
+    "website": "https://www.askaribank.com.pk",
+    "path": null
+  },
+  {
+    "country": "PK",
+    "bank": "Bank AL Habib",
+    "website": "https://bankalhabib.com",
+    "source": "https://bankalhabib.com/app/bahl/assets/addons/bahl/bahl/bahl_theme-theme/resources/images/095f4e9de1ad3c1f3491a4e09fac07b9.png?v=1584024242",
+    "path": "/banks/pk-04.png"
+  },
+  {
+    "country": "PK",
+    "bank": "Bank Alfalah",
+    "website": "https://bankalfalah.com",
+    "source": "https://prodbaf.blob.core.windows.net/static/images/logos/conventional_favicon.ico",
+    "path": "/banks/pk-05.ico"
+  },
+  {
+    "country": "PK",
+    "bank": "BankIslami Pakistan",
+    "website": "https://bankislami.com.pk",
+    "source": "https://bankislami.com.pk/favicon.ico",
+    "path": "/banks/pk-06.ico"
+  },
+  {
+    "country": "PK",
+    "bank": "Dubai Islamic Bank Pakistan",
+    "website": "https://www.dibpak.com",
+    "path": null
+  },
+  {
+    "country": "PK",
+    "bank": "Faysal Bank",
+    "website": "https://faysalbank.com",
+    "source": "https://faysalbank.com/favicon.ico",
+    "path": "/banks/pk-08.ico"
+  },
+  {
+    "country": "PK",
+    "bank": "Habib Bank Limited (HBL)",
+    "website": "https://hbl.com",
+    "source": "https://hbl.com/assets/images/favicon-32x32.jpg",
+    "path": "/banks/pk-09.jpg"
+  },
+  {
+    "country": "PK",
+    "bank": "Habib Metropolitan Bank",
+    "website": "https://habibmetro.com",
+    "source": "https://www.habibmetro.com/habibmetro/2022/02/cropped-favicon-32x32.png",
+    "path": "/banks/pk-10.png"
+  },
+  {
+    "country": "PK",
+    "bank": "JS Bank",
+    "website": "https://jsbl.com",
+    "source": "https://www.jsbl.com/wp-content/uploads/2023/09/image.png",
+    "path": "/banks/pk-11.png"
+  },
+  {
+    "country": "PK",
+    "bank": "MCB Bank",
+    "website": "https://mcb.com.pk",
+    "source": "https://www.mcb.com.pk/assets/images/favicon/apple-touch-icon.png",
+    "path": "/banks/pk-12.png"
+  },
+  {
+    "country": "PK",
+    "bank": "MCB Islamic Bank",
+    "website": "https://mcbislamicbank.com",
+    "source": "https://mcbislamicbank.com/favicon.ico",
+    "path": "/banks/pk-13.png"
+  },
+  {
+    "country": "PK",
+    "bank": "Meezan Bank",
+    "website": "https://meezanbank.com",
+    "source": "https://www.meezanbank.com/wp-content/themes/mbl/images/favicon.png",
+    "path": "/banks/pk-14.png"
+  },
+  {
+    "country": "PK",
+    "bank": "National Bank of Pakistan",
+    "website": "https://nbp.com.pk",
+    "source": "https://nbp.com.pk/favicon.ico",
+    "path": "/banks/pk-15.ico"
+  },
+  {
+    "country": "PK",
+    "bank": "Sindh Bank",
+    "website": "https://www.sindhbank.com.pk",
+    "source": "https://www.sindhbank.com.pk/wp-content/uploads/2020/01/cropped-Favicon-1-32x32.png",
+    "path": "/banks/pk-16.png"
+  },
+  {
+    "country": "PK",
+    "bank": "Soneri Bank",
+    "website": "https://soneribank.com",
+    "source": "https://soneribank.com/images/favicon-48x48.png",
+    "path": "/banks/pk-17.png"
+  },
+  {
+    "country": "PK",
+    "bank": "Standard Chartered Pakistan",
+    "website": "https://sc.com",
+    "source": "http://www.standardchartered.com/favicon.ico",
+    "path": "/banks/pk-18.png"
+  },
+  {
+    "country": "PK",
+    "bank": "The Bank of Khyber",
+    "website": "https://bok.com.pk",
+    "source": "https://bok.com.pk/sites/default/files/BOK-Favicon.png",
+    "path": "/banks/pk-19.png"
+  },
+  {
+    "country": "PK",
+    "bank": "The Bank of Punjab",
+    "website": "https://www.bop.com.pk",
+    "path": null
+  },
+  {
+    "country": "PK",
+    "bank": "United Bank Limited (UBL)",
+    "website": "https://ubldigital.com",
+    "source": "https://ubldigital.com/favicon.ico",
+    "path": "/banks/pk-21.ico"
+  },
+  {
+    "country": "AE",
+    "bank": "Abu Dhabi Commercial Bank",
+    "website": "https://adcb.com",
+    "source": "https://adcb.com/favicon.ico",
+    "path": "/banks/ae-01.ico"
+  },
+  {
+    "country": "AE",
+    "bank": "Abu Dhabi Islamic Bank",
+    "website": "https://adib.ae",
+    "source": "https://adib.ae/-/media/project/adib/adibsite/common/favicon-32x32.png",
+    "path": "/banks/ae-02.png"
+  },
+  {
+    "country": "AE",
+    "bank": "Ajman Bank",
+    "website": "https://www.ajmanbank.ae",
+    "source": "https://www.ajmanbank.ae/site/favicon.ico",
+    "path": "/banks/ae-03.ico"
+  },
+  {
+    "country": "AE",
+    "bank": "Al Hilal Bank",
+    "website": "https://www.alhilalbank.ae",
+    "path": null
+  },
+  {
+    "country": "AE",
+    "bank": "Dubai Islamic Bank",
+    "website": "https://dib.ae",
+    "source": "https://dib.ae/Assets/images/favicon.ico",
+    "path": "/banks/ae-05.png"
+  },
+  {
+    "country": "AE",
+    "bank": "Emirates Islamic",
+    "website": "https://www.emiratesislamic.ae",
+    "source": "https://www.emiratesislamic.ae/-/media/ei/images/common/logo/favicon.png",
+    "path": "/banks/ae-06.png"
+  },
+  {
+    "country": "AE",
+    "bank": "Emirates NBD",
+    "website": "https://emiratesnbd.com",
+    "source": "https://emiratesnbd.com/-/media/enbd/images/logos/favicon.png",
+    "path": "/banks/ae-07.png"
+  },
+  {
+    "country": "AE",
+    "bank": "First Abu Dhabi Bank",
+    "website": "https://bankfab.com",
+    "source": "https://bankfab.com/-/media/fab-uds/common-images/icons/favicon.png",
+    "path": "/banks/ae-08.jpg"
+  },
+  {
+    "country": "AE",
+    "bank": "Mashreq Bank",
+    "website": "https://mashreq.com",
+    "source": "https://mashreq.com/dist/mashreq-reactjs/favicon.ico",
+    "path": "/banks/ae-09.png"
+  },
+  {
+    "country": "AE",
+    "bank": "Sharjah Islamic Bank",
+    "website": "https://www.sib.ae",
+    "path": null
+  },
+  {
+    "country": "SA",
+    "bank": "Al Rajhi Bank",
+    "website": "https://alrajhibank.com.sa",
+    "source": "https://alrajhibank.com.sa/favicon-32x32.ico",
+    "path": "/banks/sa-01.png"
+  },
+  {
+    "country": "SA",
+    "bank": "Alinma Bank",
+    "website": "https://www.alinma.com",
+    "path": null
+  },
+  {
+    "country": "SA",
+    "bank": "Arab National Bank",
+    "website": "https://anb.com.sa",
+    "source": "https://anb.com.sa/o/anb-theme/images/favicon.ico",
+    "path": "/banks/sa-03.ico"
+  },
+  {
+    "country": "SA",
+    "bank": "Bank Albilad",
+    "website": "https://bankalbilad.com",
+    "source": "https://bankalbilad.com/SiteAssets/favicon.ico",
+    "path": "/banks/sa-04.png"
+  },
+  {
+    "country": "SA",
+    "bank": "Bank AlJazira",
+    "website": "https://bankaljazira.com",
+    "source": "https://bankaljazira.com/Portals/0/Images/ajb-logo.ico?ver=2025-12-09-165547-740",
+    "path": "/banks/sa-05.ico"
+  },
+  {
+    "country": "SA",
+    "bank": "Banque Saudi Fransi",
+    "website": "https://www.alfransi.com.sa",
+    "source": "https://www.alfransi.com.sa/images/favicon.png",
+    "path": "/banks/sa-06.png"
+  },
+  {
+    "country": "SA",
+    "bank": "Gulf International Bank - Saudi Arabia",
+    "website": "https://www.gib.com",
+    "path": null
+  },
+  {
+    "country": "SA",
+    "bank": "Riyad Bank",
+    "website": "https://www.riyadbank.com",
+    "source": "https://www.riyadbank.com/favicon.ico",
+    "path": "/banks/sa-08.ico"
+  },
+  {
+    "country": "SA",
+    "bank": "Saudi Awwal Bank (SAB)",
+    "website": "https://sab.com",
+    "source": "https://sab.com/etc.clientlibs/sabpws/clientlibs/clientlib-site/resources/images/favicon.ico",
+    "path": "/banks/sa-09.ico"
+  },
+  {
+    "country": "SA",
+    "bank": "Saudi Investment Bank",
+    "website": "https://saib.com.sa",
+    "source": "https://saib.com.sa/themes/custom/saib/favicon.ico",
+    "path": "/banks/sa-10.ico"
+  },
+  {
+    "country": "SA",
+    "bank": "Saudi National Bank",
+    "website": "https://alahli.com",
+    "source": "https://alahli.com/dist/SNB-Web/favicon.ico",
+    "path": "/banks/sa-11.ico"
+  },
+  {
+    "country": "GB",
+    "bank": "Bank of Scotland",
+    "website": "https://www.bankofscotland.co.uk",
+    "path": null
+  },
+  {
+    "country": "GB",
+    "bank": "Barclays",
+    "website": "https://barclays.co.uk",
+    "source": "https://barclays.co.uk/content/dam/icons/favicons/barclays/favicon.ico",
+    "path": "/banks/gb-02.png"
+  },
+  {
+    "country": "GB",
+    "bank": "HSBC UK",
+    "website": "https://hsbc.co.uk",
+    "source": "https://hsbc.co.uk/etc.clientlibs/dpws/clientlibs-public/clientlib-site/resources/favicons/apple-touch-icon.png",
+    "path": "/banks/gb-03.png"
+  },
+  {
+    "country": "GB",
+    "bank": "Lloyds Bank",
+    "website": "https://www.lloydsbank.com",
+    "path": null
+  },
+  {
+    "country": "GB",
+    "bank": "Metro Bank",
+    "website": "https://metrobankonline.co.uk",
+    "source": "https://metrobankonline.co.uk/static/images/apple-icon-57x57.png",
+    "path": "/banks/gb-05.png"
+  },
+  {
+    "country": "GB",
+    "bank": "Monzo Bank",
+    "website": "https://monzo.com",
+    "source": "https://static-assets.monzo.com/monzo-com/c6f8094b5e34f91478828564e9136da81795ddff/_next/static/media/favicon.87a9df8c.png",
+    "path": "/banks/gb-06.png"
+  },
+  {
+    "country": "GB",
+    "bank": "NatWest",
+    "website": "https://natwest.com",
+    "source": "https://natwest.com/apps/settings/wcm/designs/responsive_champion/clientlibs/resources/responsive_natwest_personal_favicon.ico",
+    "path": "/banks/gb-07.ico"
+  },
+  {
+    "country": "GB",
+    "bank": "Royal Bank of Scotland",
+    "website": "https://rbs.co.uk",
+    "source": "https://rbs.co.uk/apps/settings/wcm/designs/responsive_champion/clientlibs/resources/responsive_rbs_personal_favicon.ico",
+    "path": "/banks/gb-08.ico"
+  },
+  {
+    "country": "GB",
+    "bank": "Santander UK",
+    "website": "https://santander.co.uk",
+    "source": "https://santander.co.uk/favicon.ico",
+    "path": "/banks/gb-09.ico"
+  },
+  {
+    "country": "GB",
+    "bank": "Starling Bank",
+    "website": "https://starlingbank.com",
+    "source": "https://starlingbank.com/favicon.ico",
+    "path": "/banks/gb-10.ico"
+  },
+  {
+    "country": "GB",
+    "bank": "The Co-operative Bank",
+    "website": "https://www.co-operativebank.co.uk",
+    "source": "https://www.co-operativebank.co.uk/application/themes/co-operativebank/img/favicon.ico",
+    "path": "/banks/gb-11.png"
+  },
+  {
+    "country": "GB",
+    "bank": "TSB Bank",
+    "website": "https://tsb.co.uk",
+    "source": "https://tsb.co.uk/etc.clientlibs/tsb-public/clientlibs/clientlib-site/resources/icon-192x192.png",
+    "path": "/banks/gb-12.ico"
+  },
+  {
+    "country": "QA",
+    "bank": "Ahli Bank",
+    "website": "https://ahlibank.com.qa",
+    "source": "https://ahlibank.com.qa/favicon.ico",
+    "path": "/banks/qa-01.ico"
+  },
+  {
+    "country": "QA",
+    "bank": "Commercial Bank of Qatar",
+    "website": "https://cbq.qa",
+    "source": "https://www.cbq.com.qa/-/media/project/cbq/cbqwebsite/favicon-32x32.png",
+    "path": "/banks/qa-02.png"
+  },
+  {
+    "country": "QA",
+    "bank": "Doha Bank",
+    "website": "https://www.dohabank.com",
+    "path": null
+  },
+  {
+    "country": "QA",
+    "bank": "Dukhan Bank",
+    "website": "https://dukhanbank.com",
+    "source": "https://dukhanbank.com/sites/default/files/favicon_1neww.ico",
+    "path": "/banks/qa-04.png"
+  },
+  {
+    "country": "QA",
+    "bank": "HSBC Qatar",
+    "website": "https://hsbc.com.qa",
+    "source": "https://hsbc.com.qa/etc.clientlibs/dpws/clientlibs-public/clientlib-site/resources/favicons/apple-touch-icon.png",
+    "path": "/banks/qa-05.png"
+  },
+  {
+    "country": "QA",
+    "bank": "Masraf Al Rayan",
+    "website": "https://www.alrayan.com",
+    "source": "https://www.alrayan.com/favicon.ico",
+    "path": "/banks/qa-06.png"
+  },
+  {
+    "country": "QA",
+    "bank": "Qatar International Islamic Bank",
+    "website": "https://qiib.com.qa",
+    "source": "https://qiib.com.qa/favicon.ico",
+    "path": "/banks/qa-07.ico"
+  },
+  {
+    "country": "QA",
+    "bank": "Qatar Islamic Bank",
+    "website": "https://qib.com.qa",
+    "source": "https://qib.com.qa/favicon.ico",
+    "path": "/banks/qa-08.ico"
+  },
+  {
+    "country": "QA",
+    "bank": "Qatar National Bank (QNB)",
+    "website": "https://www.qnb.com",
+    "path": null
+  },
+  {
+    "country": "OM",
+    "bank": "Ahli Bank",
+    "website": "https://www.ahlibank.om",
+    "path": null
+  },
+  {
+    "country": "OM",
+    "bank": "Al Izz Islamic Bank",
+    "website": "https://alizzislamic.com",
+    "source": "https://alizzislamic.com/favicon.ico",
+    "path": "/banks/om-02.png"
+  },
+  {
+    "country": "OM",
+    "bank": "Bank Dhofar",
+    "website": "https://bankdhofar.com",
+    "source": "https://bankdhofar.com/media/wvffurdm/fav-icon.png?width=32&height=32",
+    "path": "/banks/om-03.png"
+  },
+  {
+    "country": "OM",
+    "bank": "Bank Muscat",
+    "website": "https://www.bankmuscat.com",
+    "path": null
+  },
+  {
+    "country": "OM",
+    "bank": "Bank Nizwa",
+    "website": "https://banknizwa.om",
+    "source": "https://banknizwa.om/assets/images/favicon.png",
+    "path": "/banks/om-05.png"
+  },
+  {
+    "country": "OM",
+    "bank": "National Bank of Oman",
+    "website": "https://nbo.om",
+    "source": "https://nbo.om/Style%20Library/NBO3/images/favicons/apple-touch-icon-57x57.png",
+    "path": "/banks/om-06.png"
+  },
+  {
+    "country": "OM",
+    "bank": "Oman Arab Bank",
+    "website": "https://oman-arabbank.com",
+    "source": "https://www.oman-arabbank.com/wp-content/uploads/FavIcon-1.png",
+    "path": "/banks/om-07.png"
+  },
+  {
+    "country": "OM",
+    "bank": "Sohar International",
+    "website": "https://www.soharinternational.com",
+    "source": "https://res.cloudinary.com/dtqjagydd/image/upload/v1721631135/sohardevelopment/Logo_245331cf55.svg",
+    "path": "/banks/om-08.png"
+  },
+  {
+    "country": "KW",
+    "bank": "Al Ahli Bank of Kuwait",
+    "website": "https://abk.eahli.com",
+    "source": "https://abk.eahli.com/static/abk/favicon/favicon.ico",
+    "path": "/banks/kw-01.ico"
+  },
+  {
+    "country": "KW",
+    "bank": "Burgan Bank",
+    "website": "https://burgan.com",
+    "source": "https://burgan.com/static/images/favicon.png",
+    "path": "/banks/kw-02.png"
+  },
+  {
+    "country": "KW",
+    "bank": "Commercial Bank of Kuwait",
+    "website": "https://www.cbk.com",
+    "path": null
+  },
+  {
+    "country": "KW",
+    "bank": "Gulf Bank",
+    "website": "https://www.e-gulfbank.com",
+    "path": null
+  },
+  {
+    "country": "KW",
+    "bank": "National Bank of Kuwait",
+    "website": "https://nbk.com",
+    "source": "https://nbk.com/.resources/nbk-theme/images/favicon.png",
+    "path": "/banks/kw-05.png"
+  },
+  {
+    "country": "FR",
+    "bank": "BNP Paribas",
+    "website": "https://mabanque.bnpparibas",
+    "source": "https://mabanque.bnpparibas/favicon.ico",
+    "path": "/banks/fr-01.ico"
+  },
+  {
+    "country": "FR",
+    "bank": "Banque Populaire",
+    "website": "https://www.banquepopulaire.fr",
+    "source": "https://bp-prod.cloudimg.io/_images_/app/uploads/sites/5/2022/03/11141119/cropped-banque-populaire-logotype-rvb-1.png?func=bound&w=32&h=32&gravity=auto&optipress=2",
+    "path": "/banks/fr-02.png"
+  },
+  {
+    "country": "FR",
+    "bank": "Caisse d’Epargne",
+    "website": "https://www.caisse-epargne.fr",
+    "source": "https://ce-prod.cloudimg.io/_images_/app/uploads/sites/3/2021/05/31183441/ce-100x100-1.png?func=bound&w=32&h=32&gravity=auto&optipress=2",
+    "path": "/banks/fr-03.png"
+  },
+  {
+    "country": "FR",
+    "bank": "Crédit Agricole",
+    "website": "https://credit-agricole.fr",
+    "source": "https://credit-agricole.fr/content/dam/assetsca/npc/logos/icone_ca_pwa.png",
+    "path": "/banks/fr-04.png"
+  },
+  {
+    "country": "FR",
+    "bank": "Crédit Mutuel",
+    "website": "https://creditmutuel.fr",
+    "source": "https://cdnsi.e-i.com/INGR/sd/cm_2015/59.128.3/fr/images/std/favicons/apple-touch-icon.png",
+    "path": "/banks/fr-05.png"
+  },
+  {
+    "country": "FR",
+    "bank": "LCL",
+    "website": "https://lcl.fr",
+    "source": "https://lcl.fr/favicon.ico",
+    "path": "/banks/fr-06.png"
+  },
+  {
+    "country": "FR",
+    "bank": "La Banque Postale",
+    "website": "https://www.labanquepostale.fr",
+    "source": "https://www.labanquepostale.fr/content/dam/lbp/iconographie/assets-specifiques/logos-group/lbp/light/LOGO-LBP-digital-fd-clair-RVB.svg",
+    "path": "/banks/fr-07.png"
+  },
+  {
+    "country": "FR",
+    "bank": "Société Générale",
+    "website": "https://particuliers.sg.fr",
+    "source": "https://particuliers.sg.fr/static/Resources/img/favicon.ico",
+    "path": "/banks/fr-08.png"
+  },
+  {
+    "country": "ES",
+    "bank": "BBVA",
+    "website": "https://bbva.es",
+    "source": "https://bbva.es/favicon.ico",
+    "path": "/banks/es-01.ico"
+  },
+  {
+    "country": "ES",
+    "bank": "Banco Sabadell",
+    "website": "https://bancsabadell.com",
+    "source": "https://bancsabadell.com/StaticFiles/BSNacional/Favicon/apple-icon-57x57.png?version=26.07",
+    "path": "/banks/es-02.png"
+  },
+  {
+    "country": "ES",
+    "bank": "Banco Santander",
+    "website": "https://bancosantander.es",
+    "source": "https://assets.santandermedia.com/adobe/assets/urn:aaid:aem:f6a07c77-a37f-4954-b7b2-853d21263d27/as/favicon-32x32.png",
+    "path": "/banks/es-03.png"
+  },
+  {
+    "country": "ES",
+    "bank": "Bankinter",
+    "website": "https://www.bankinter.com",
+    "path": null
+  },
+  {
+    "country": "ES",
+    "bank": "CaixaBank",
+    "website": "https://www.caixabank.es",
+    "source": "https://www.caixabank.es/favicon.ico",
+    "path": "/banks/es-05.ico"
+  }
+]

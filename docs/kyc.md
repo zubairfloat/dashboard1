@@ -2,7 +2,7 @@
 
 ## Using the feature
 
-- Users: open **KYC Verification** in the sidebar or profile. Select the issuing country, then National ID Card, Passport or Driving License. Enter the name on the document. Passports require the photo/details page; IDs and driving licenses require front and back. Upload JPG, JPEG, PNG or PDF files (maximum 5 MB each), accept the review consent and submit.
+- Users: open **KYC Verification** in the sidebar or profile. Select the country, choose a bank (or enter an unlisted bank), and enter an IBAN and the mandatory Account Holder Name exactly as registered with the bank. Continue to documents, then choose National ID Card, Passport or Driving License. Enter the name on the document. Passports require the photo/details page; IDs and driving licenses require front and back. Upload JPG, JPEG, PNG or PDF files (maximum 5 MB each), accept the review consent and submit.
 - Reviewers: **Admin Panel → Review KYC submissions**. Open all required documents, review the selected country and document type, then approve or reject with feedback. Images preview inline; PDFs download privately for review. Approved IDs do not automatically approve the general account.
 - Rejected users can submit new photos. Each attempt keeps its own immutable record, reviewer ID and review timestamp.
 
@@ -69,3 +69,47 @@ Migration `20260916220633_kyc_document_types.sql` adds country codes and documen
 This initial version offers the same three document types for all countries. Country-specific acceptance rules, document numbers, expiry dates and documents without expiry dates are deferred. Admin accounts remain exempt from personal KYC.
 
 File validation tests: `node --test tests/kyc-files.cjs`. Run `tests/kyc-document-types.sql` after `tests/kyc-rls.sql` in a rolled-back transaction to verify country validation and required files for each type.
+
+## Bank details
+
+The form now has two steps: country → bank → IBAN, then identity documents. Changing the country clears the bank and IBAN. Going back to bank details clears document inputs, so files must be selected again. The selected country applies to both the bank account and identity document.
+
+The curated directory in `lib/kyc-banks.ts` contains 89 bank options across Pakistan, UAE, Saudi Arabia, UK, Qatar, Oman, Kuwait, France and Spain. It is not a complete global directory; every country includes “Other bank” for manual entry. Sources: [State Bank of Pakistan](https://www.sbp.org.pk/our-subsidiaries/raast/raast-person-to-person), [CBUAE](https://centralbank.ae/en/licensing), [SAMA](https://sama.gov.sa/en-US/Supervision/LicenseEntities/Pages/default.aspx), and [Bank of England](https://www.bankofengland.co.uk/payment-and-settlement/chaps). Update this directory as coverage expands.
+
+IBAN input is normalized to uppercase without whitespace and checked for country prefix and basic format in both the browser and database. Pakistan intentionally uses format-only validation (PK + 2 digits + 4 letters + 16 alphanumeric characters, 24 total), with no checksum or bank-code matching. Other countries retain mod-97 checksum checks. Pakistan, UAE, Saudi Arabia and the UK also have exact length checks. This does not verify account ownership, bank-to-IBAN matching or account existence. Domestic account numbers for banks that do not issue IBANs are not supported by this IBAN-only flow.
+
+`bank_name` and `iban` remain on the private, RLS-protected submission. Authorized reviewers can see them; emails do not include them. Existing submissions retain null bank fields and remain reviewable. New submissions require bank details, which cannot be changed after submission.
+
+Deployment: apply `supabase/migrations/20261006191949_kyc_bank_details.sql` together with deploying the updated application. The migration has been tested in a rolled-back transaction on the configured project, but has not been applied permanently: applying it alone would make the currently deployed form unable to submit without bank fields.
+
+Validation: `node --test tests/kyc-banks.cjs tests/kyc-files.cjs`, TypeScript and targeted ESLint checks. Run `tests/kyc-rls.sql`, `tests/kyc-document-types.sql`, `tests/kyc-notifications.sql` and `tests/kyc-banks.sql` in that order within a transaction after the migration, then roll back. Fixtures use synthetic bank details; no emails are sent.
+
+Additional bank-directory sources: [Qatar Central Bank](https://www.qcb.gov.qa/en/Pages/Retail-payment-systems.aspx), [Central Bank of Oman](https://cbo.gov.om/Pages/LicensedBanks.aspx), [Central Bank of Kuwait](https://www.cbk.gov.kw/en/supervision/regulated-entities/kuwaiti-banks/conventional-banks), [Banque de France](https://acpr.banque-france.fr/fr/actualites/analyses-et-syntheses-situation-des-grands-groupes-bancaires-francais), [Banco de España](https://www.bde.es/app/sif/es/publicacion/intercambio/), [UK PRA register](https://www.bankofengland.co.uk/prudential-regulation/authorisations/which-firms-does-the-pra-regulate), and [CBUAE Islamic banks](https://centralbank.ae/en/our-operations/islamic-finance/islamic-banking/). These are manually maintained options, not a live bank feed.
+
+### Bank logos
+
+The picker and selected-bank field use 73 locally stored brand icons downloaded from bank websites. `public/banks/sources.json` records each country, bank, source website, image URL, and asset path; 16 unavailable logos use the generic bank icon. `lib/kyc-bank-logos.ts` keys the lookup by country and bank name to distinguish similarly named banks. An image loading error also displays the fallback. No external logo service or browser request to a bank website is required. These assets identify the banks; they do not imply endorsement.
+
+Account holder name: deploy `supabase/migrations/20261016190935_kyc_account_holder_name.sql` together with the form update. New submissions require a non-blank name; historic submissions remain readable and reviewable without one. The name is stored separately from the document name and shown to reviewers. This migration has not been applied to the hosted database.
+
+Optional details: `supabase/migrations/20261016195504_kyc_optional_details.sql` adds nullable crypto wallet and residential address objects to the existing RLS-protected KYC table. Deploy it with the application (after the account holder migration). No hosted migration was applied during this change. Only the owner and authorized KYC reviewers can read the row; authenticated clients receive INSERT permission for the new columns, never UPDATE. The trigger validates direct API inserts and prevents later edits while allowing normal status reviews.
+
+Both sections start collapsed. Crypto is omitted unless enabled; unchecking it omits any retained draft. BTC supports Bitcoin, ETH supports Ethereum/BEP20, and USDT supports Ethereum/TRC20/BEP20. Validation checks address format only, not checksum, ownership, balances or activity. Address information is omitted when entirely blank; partial entries require line 1, city and country, with state and postal code optional where not applicable. Clear residential address removes the entire address. Drafts survive navigation between form steps but are not persisted to browser storage.
+
+Checks: `node --test tests/kyc-optional.cjs tests/kyc-banks.cjs`; database regression: `tests/kyc-optional.sql` (run after migration).
+
+The optional-details migration and SQL regression were verified with an isolated PGlite Postgres instance, including the existing `kyc_read` policy with simulated owner, unrelated-user, reviewer and anonymous roles. Hosted Supabase deployment and browser interaction were not exercised. Format references: [Ethereum accounts](https://ethereum.org/developers/docs/accounts), [TRON addresses](https://developers.tron.network/docs/account), [Bitcoin witness addresses](https://bips.dev/350/).
+
+Deployment update (2026-10-17): applied bank details, account holder name and optional details to the configured hosted project as the combined migration `kyc_bank_holder_and_optional_details`. This supersedes the earlier pending-deployment notes. Reloaded the PostgREST schema cache, verified INSERT privileges for all five new columns, and passed the account-holder and optional-details SQL regressions in rolled-back transactions. Existing owner/reviewer RLS policies remain unchanged. The combined remote migration corresponds to the three local migration files; do not reapply those files to this project without reconciling migration history.
+
+## Completing bank details after legacy identity approval
+
+Apply `supabase/migrations/20261021213355_kyc_legacy_bank_supplements.sql` to **each target environment before deploying the application update**. It requires all six earlier KYC migrations. For a fresh or repaired UAT installation, run the existing setup/repair script first, then this migration once. This migration has not been applied to UAT or production by this change.
+
+Verified users missing a bank name, IBAN or account holder name now see a persistent dashboard reminder and a bank-only form at `/dashboard/kyc`. Bank country, bank, IBAN and account holder name are required; wallet/address details remain optional and use existing validation and disclaimers. Saving does not upload documents, create another identity submission, reset verification, alter review timestamps or send a new identity-review email. Pending users stay under review; rejected users still correct and resubmit documents.
+
+Details are stored once in `kyc_bank_supplements`, linked one-to-one to the original submission. Its bank country is separate from the original identity country. RLS permits only the eligible verified owner to insert, and only the owner or authorized KYC reviewers to read. Clients cannot update or delete supplements or set audit timestamps. Existing identity data and validation triggers remain untouched. Reviewers see the supplement alongside the approved identity record under the Verified filter. Bank details remain self-reported; this does not claim bank ownership verification.
+
+After saving, the form reports success and the shared KYC status refresh clears the reminder. Optional details can be included with this one-time completion; later edits require a separate supported workflow.
+
+Validation: `node --test tests/kyc-notice.cjs tests/kyc-legacy-form.cjs tests/kyc-banks.cjs tests/kyc-optional.cjs`. `tests/kyc-legacy-bank.sql` is for an isolated test database only; it creates synthetic historical fixtures and rolls back. It passed against local Postgres/PGlite with simulated Supabase schemas, covering eligibility, cross-user reads/inserts, anonymous access, reviewer reads, duplicate/update rejection and preservation of the approved identity record. TypeScript and targeted ESLint passed. Real browser submission against a deployed environment is still required after migration.

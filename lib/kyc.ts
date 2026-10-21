@@ -1,3 +1,5 @@
+import type { CryptoWallet, ResidentialAddress } from "./kyc-optional";
+
 export const KYC_BUCKET = "kyc-documents";
 export const MAX_KYC_FILE_BYTES = 5 * 1024 * 1024;
 export const KYC_FILE_ACCEPT = ".jpg,.jpeg,.png,.pdf,image/jpeg,image/png,application/pdf";
@@ -15,9 +17,24 @@ export function isKycDocumentType(value: string): value is KycDocumentType {
 export function getKycDocument(type: KycDocumentType | undefined) {
   return KYC_DOCUMENT_TYPES[type || "national_id"];
 }
+export type KycBankSupplement = {
+  submission_id: string; country_code: string; bank_name: string; iban: string;
+  account_holder_name: string; crypto_wallet: CryptoWallet | null;
+  residential_address: ResidentialAddress | null; created_at: string;
+};
+export function needsKycBankDetails(submission: KycSubmission | null | undefined): boolean {
+  if (!submission || submission.status !== "verified" || submission.bank_supplement) return false;
+  return !submission.bank_name?.trim() || !submission.iban?.trim() || !submission.account_holder_name?.trim();
+}
 export type KycSubmission = {
+  bank_supplement?: KycBankSupplement | null;
   id: string; user_id: string; full_name: string; country: string;
   country_code: string | null;
+  bank_name: string | null;
+  iban: string | null;
+  account_holder_name: string | null;
+  crypto_wallet: CryptoWallet | null;
+  residential_address: ResidentialAddress | null;
   document_type: KycDocumentType;
   status: "pending" | "verified" | "rejected";
   rejection_reason: string | null; created_at: string; reviewed_at: string | null;
