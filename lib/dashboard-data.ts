@@ -48,7 +48,7 @@ export const getKycState = cache(async (): Promise<KycState> => {
   const supabase = await createServerSupabase();
   const [{ data: reviewer, error: reviewerError }, { data: submission, error }] = await Promise.all([
     supabase.rpc("is_kyc_reviewer"),
-    profile.is_admin ? Promise.resolve({ data: null, error: null }) : supabase.from("kyc_submissions").select("*").eq("user_id", user.id).order("created_at", { ascending: false }).limit(1).maybeSingle(),
+    profile.is_admin ? Promise.resolve({ data: null, error: null }) : supabase.from("kyc_submissions").select("*, bank_supplement:kyc_bank_supplements(*)").eq("user_id", user.id).order("created_at", { ascending: false }).limit(1).maybeSingle(),
   ]);
   return {
     ready: !error && !reviewerError, admin: profile.is_admin, reviewer: Boolean(reviewer), submission,
@@ -101,7 +101,7 @@ export const getKycSummary = cache(async () => {
   const state = await getKycState();
   if (!state.reviewer) return null;
   const supabase = await createServerSupabase();
-  const { data, error, count } = await supabase.from("kyc_submissions").select("*", { count: "exact" }).eq("status", "pending").order("created_at", { ascending: true }).limit(5);
+  const { data, error, count } = await supabase.from("kyc_submissions").select("*, bank_supplement:kyc_bank_supplements(*)", { count: "exact" }).eq("status", "pending").order("created_at", { ascending: true }).limit(5);
   if (error) throw new Error("Unable to load KYC requests.");
   return { items: data || [], count: count || 0 };
 });

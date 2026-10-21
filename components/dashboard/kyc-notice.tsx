@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { needsKycBankDetails } from "@/lib/kyc";
 import { ShieldAlert } from "lucide-react";
 import { useKycStatus } from "@/hooks/use-kyc-status";
 import { useEffect } from "react";
@@ -16,7 +17,8 @@ export default function KycNotice() {
     const interval = setInterval(deliver, 60000);
     return () => clearInterval(interval);
   }, [ready, reviewer, pendingId]);
-  if (!ready || admin || reviewer || submission?.status === "verified") return null;
+  const missingBank = needsKycBankDetails(submission);
+  if (!ready || admin || reviewer || (submission?.status === "verified" && !missingBank)) return null;
   const rejected = submission?.status === "rejected";
   const submitted = submission?.status === "pending";
 
@@ -24,13 +26,13 @@ export default function KycNotice() {
     <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
       <ShieldAlert className={`shrink-0 ${rejected ? "text-rose-200" : "text-amber-200"}`} aria-hidden="true" />
       <div className="flex-1 text-blue-50">
-        <p className="font-semibold">{rejected ? "KYC rejected — action required" : submitted ? "Documents submitted — under admin review" : "KYC verification pending"}</p>
-        <p className="mt-1 text-sm">{rejected ? "Your KYC verification was rejected. Please correct your information or documents and resubmit for review." : "Your KYC verification is pending. Please complete the verification process as soon as possible."}</p>
+        <p className="font-semibold">{missingBank ? "Complete your bank details" : rejected ? "KYC rejected — action required" : submitted ? "Documents submitted — under admin review" : "KYC verification pending"}</p>
+        <p className="mt-1 text-sm">{missingBank ? "Your identity is verified. Please add your missing bank details. Crypto wallet and residential address details are optional. You do not need to upload your identity documents again." : rejected ? "Your KYC verification was rejected. Please correct your information or documents and resubmit for review." : "Your KYC verification is pending. Please complete the verification process as soon as possible."}</p>
         {submitted && <p className="mt-2 text-sm text-blue-100/80">Your documents have been received. No further upload is needed while the admin reviews them.</p>}
         {rejected && submission.rejection_reason && <p className="mt-2 whitespace-pre-wrap text-sm text-rose-100">Reviewer feedback: {submission.rejection_reason}</p>}
         {error && <p className="mt-2 text-xs text-blue-100/70">{error}</p>}
       </div>
-      <Link href="/dashboard/kyc" className="shrink-0 rounded-xl bg-white/10 px-4 py-2 text-sm font-semibold text-white hover:bg-white/20">{rejected ? "Correct and resubmit" : submitted ? "View KYC status" : "Complete verification"}</Link>
+      <Link href="/dashboard/kyc" className="shrink-0 rounded-xl bg-white/10 px-4 py-2 text-sm font-semibold text-white hover:bg-white/20">{missingBank ? "Add bank details" : rejected ? "Correct and resubmit" : submitted ? "View KYC status" : "Complete verification"}</Link>
     </div>
   </aside>;
 }

@@ -9,7 +9,7 @@ import { useState } from "react";
 import { ShieldCheck, Upload, RefreshCw, Landmark, FileCheck2, Check, ArrowRight, CreditCard, LockKeyhole, CircleAlert, CircleCheck } from "lucide-react";
 import { formatDateTime } from "@/lib/format";
 import { supabase } from "@/lib/supabase/client";
-import { KYC_BUCKET, KYC_DOCUMENT_TYPES, KYC_FILE_ACCEPT, KYC_FILE_HELP, getKycDocument, isKycDocumentType, validateKycFile, type KycSubmission } from "@/lib/kyc";
+import { KYC_BUCKET, KYC_DOCUMENT_TYPES, KYC_FILE_ACCEPT, KYC_FILE_HELP, getKycDocument, isKycDocumentType, validateKycFile, needsKycBankDetails, type KycSubmission } from "@/lib/kyc";
 import { getKycBanks, getKycIbanExample, normalizeIban, validateKycBank } from "@/lib/kyc-banks";
 import { getKycBankLogo } from "@/lib/kyc-bank-logos";
 import { KYC_COUNTRIES } from "@/lib/kyc-countries";
@@ -44,7 +44,9 @@ export default function PersonalKycForm() {
   const selectedDocument = isKycDocumentType(documentType) ? getKycDocument(documentType) : null;
   const bankDetailsError = validateKycBank(countryCode, bank, otherBank, iban);
   const showBankValidation = Boolean(bank) && normalizeIban(iban).length > 2;
-  const canSubmit = ready && (!submission || submission.status === "rejected");
+  const [completedSupplement, setCompletedSupplement] = useState<string | null>(null);
+  const completingBank = needsKycBankDetails(submission) && completedSupplement !== submission?.id;
+  const canSubmit = ready && (!submission || submission.status === "rejected" || completingBank);
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -54,6 +56,23 @@ export default function PersonalKycForm() {
     if (!accountHolderName.trim()) { setMessage("Enter the account holder name registered with your bank account."); return; }
     setOptionalAttempted(true);
     if (optionalError) { setMessage(optionalError); return; }
+    if (completingBank && submission) {
+      setBusy(true); setMessage("");
+      try {
+        const { error } = await supabase.from("kyc_bank_supplements").insert({
+          submission_id: submission.id, country_code: countryCode,
+          bank_name: bank === "other" ? otherBank.trim() : bank,
+          iban: normalizeIban(iban), account_holder_name: accountHolderName.trim(),
+          crypto_wallet: cryptoWallet, residential_address: normalizedAddress,
+        });
+        if (error) throw new Error(error.code === "23505" ? "Bank details have already been saved. Refresh your status." : "Bank details could not be saved. Please try again.");
+        setCompletedSupplement(submission.id);
+        setMessage("Your bank details have been saved. Your identity verification remains approved.");
+        window.dispatchEvent(new Event("kyc-updated"));
+      } catch (error) { setMessage(error instanceof Error ? error.message : "Unable to save bank details."); }
+      finally { setBusy(false); }
+      return;
+    }
     if (step === "bank") { setStep("documents"); setMessage(""); return; }
     const values = new FormData(event.currentTarget);
     setBusy(true);
@@ -95,7 +114,7 @@ export default function PersonalKycForm() {
     <header>
       <p className="mb-2 text-sm text-sky-300">ACCOUNT SECURITY</p>
       <h1 className="text-3xl font-bold text-white md:text-4xl">Identity verification</h1>
-      <p className="mt-3 text-blue-100/70">Choose your country and bank, enter your IBAN, then upload your identity documents for review.</p>
+      <p className="mt-3 text-blue-100/70">{submission?.status === "verified" ? "Your identity is verified. Keep your bank details complete without repeating identity verification." : "Choose your country and bank, enter your IBAN, then upload your identity documents for review."}</p>
     </header>
     <section className="workspace-panel rounded-3xl border border-white/10 bg-white/5 p-6" aria-busy={!ready}>
       <div className="flex flex-wrap items-center justify-between gap-4">
@@ -115,8 +134,9 @@ export default function PersonalKycForm() {
     </section>
     {(message || error) && <p role="status" className="rounded-xl border border-sky-300/20 bg-sky-300/10 p-4 text-blue-100">{message || error}</p>}
     {canSubmit && <form onSubmit={submit} className="workspace-panel rounded-3xl border border-white/10 bg-white/5 p-6 md:p-8">
-      <h2 className="text-xl font-semibold text-white">{submission ? "Resubmit your documents" : "Verify your identity"}</h2>
-      <ol aria-label="Verification progress" className="mt-6 grid grid-cols-2 gap-3 border-b border-white/10 pb-6">
+      <h2 className="text-xl font-semibold text-white">{completingBank ? "Complete your bank details" : submission ? "Resubmit your documents" : "Verify your identity"}</h2>
+      {completingBank && <p className="mt-3 text-sm text-blue-100/75">Please add your missing bank details. You can also add a crypto wallet and residential address. Your KYC approval and uploaded documents will remain unchanged.</p>}
+      {!completingBank && <ol aria-label="Verification progress" className="mt-6 grid grid-cols-2 gap-3 border-b border-white/10 pb-6">
         {[{ key: "bank", title: "Bank details", subtitle: "Country & account", icon: Landmark }, { key: "documents", title: "Identity documents", subtitle: "Upload & submit", icon: FileCheck2 }].map((item, index) => {
           const active = step === item.key;
           const complete = item.key === "bank" && step === "documents";
@@ -126,10 +146,10 @@ export default function PersonalKycForm() {
             <span className="min-w-0"><span className={`block text-sm font-medium ${active || complete ? "text-white" : "text-blue-100/45"}`}>{index + 1}. {item.title}</span><span className="mt-1 hidden text-xs text-blue-100/45 sm:block">{item.subtitle}</span></span>
           </li>;
         })}
-      </ol>
+      </ol>}
       <fieldset disabled={busy} className="mt-6 space-y-6 disabled:opacity-60">
         {step === "bank" && <>
-        <KycPicker label="Country or region" placeholder="Select your country" searchPlaceholder="Search countries…" kind="country" disabled={busy} options={KYC_COUNTRIES.map(country => ({ value: country.code, label: country.name }))} value={countryCode} onChange={value => { setCountryCode(value); setBank(""); setOtherBank(""); setIban(""); setDocumentType(""); setMessage(""); }} />
+        <KycPicker label={completingBank ? "Bank country or region" : "Country or region"} placeholder="Select your country" searchPlaceholder="Search countries…" kind="country" disabled={busy} options={KYC_COUNTRIES.map(country => ({ value: country.code, label: country.name }))} value={countryCode} onChange={value => { setCountryCode(value); setBank(""); setOtherBank(""); setIban(""); setDocumentType(""); setMessage(""); }} />
         {countryCode && <>
           <KycPicker key={countryCode} label="Bank" placeholder="Select your bank" searchPlaceholder="Search banks…" kind="bank" disabled={busy} options={[...banks.map(name => ({ value: name, label: name, logo: getKycBankLogo(countryCode, name) })), { value: "other", label: "Other bank", detail: "Enter a bank that is not listed" }]} value={bank} onChange={value => { setBank(value); setOtherBank(""); setIban(value ? countryCode : ""); setMessage(""); }} />
           {!banks.length && <p className="text-sm text-blue-100/70">A bank list is not available for this country yet. Select “Other bank” and enter your bank’s name.</p>}
@@ -148,7 +168,8 @@ export default function PersonalKycForm() {
           </label>}
         </>}
         <KycOptionalDetails enabled={cryptoEnabled} onEnabled={setCryptoEnabled} wallet={wallet} onWallet={setWallet} address={residentialAddress} onAddress={setResidentialAddress} error={optionalAttempted ? optionalError : null} />
-        <button type="submit" disabled={Boolean(bankDetailsError) || !accountHolderName.trim()} className="workspace-action flex w-full items-center justify-center gap-3 rounded-xl bg-[#a9e8ed] px-6 py-3.5 font-semibold text-blue-950 transition hover:bg-sky-200 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto">Continue to documents <ArrowRight size={18} aria-hidden="true" /></button>
+        {completingBank && <label className="flex items-start gap-3 text-sm leading-6 text-blue-100/80"><input type="checkbox" required className="mt-1" />I confirm these are my bank details and consent to storing the information provided for authorized review.</label>}
+        <button type="submit" disabled={Boolean(bankDetailsError) || !accountHolderName.trim()} className="workspace-action flex w-full items-center justify-center gap-3 rounded-xl bg-[#a9e8ed] px-6 py-3.5 font-semibold text-blue-950 transition hover:bg-sky-200 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto">{completingBank ? busy ? "Saving…" : "Save bank details" : "Continue to documents"} <ArrowRight size={18} aria-hidden="true" /></button>
         </>}
         {step === "documents" && <>
         <div className="rounded-xl border border-white/10 p-4 text-sm text-blue-100"><p>{KYC_COUNTRIES.find(country => country.code === countryCode)?.name} · {bank === "other" ? otherBank : bank}</p><p className="mt-1">IBAN ending in {normalizeIban(iban).slice(-4)}</p><button type="button" onClick={() => { setStep("bank"); setDocumentType(""); setMessage(""); }} className="mt-3 text-sky-300 underline">Back to bank details</button></div>
