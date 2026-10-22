@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import KycSavedDetails from "../kyc-saved-details";
 import { KycOptionalDetails } from "./kyc-optional-details";
 import { emptyAddress, normalizeAddress, validateOptionalDetails, type CryptoWallet } from "@/lib/kyc-optional";
 import { KycPicker } from "./kyc-picker";
@@ -132,6 +133,7 @@ export default function PersonalKycForm() {
       </div>
       <p className="mt-5 border-t border-white/10 pt-4 text-sm text-blue-100/60">Identity verification is separate from account approval.</p>
     </section>
+    {ready && submission?.status === "verified" && <div className="workspace-panel rounded-3xl border border-white/10 bg-white/5 p-6 md:p-8"><KycSavedDetails submission={submission} /></div>}
     {(message || error) && <p role="status" className="rounded-xl border border-sky-300/20 bg-sky-300/10 p-4 text-blue-100">{message || error}</p>}
     {canSubmit && <form onSubmit={submit} className="workspace-panel rounded-3xl border border-white/10 bg-white/5 p-6 md:p-8">
       <h2 className="text-xl font-semibold text-white">{completingBank ? "Complete your bank details" : submission ? "Resubmit your documents" : "Verify your identity"}</h2>

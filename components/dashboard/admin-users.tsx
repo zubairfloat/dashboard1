@@ -441,6 +441,9 @@ function UserActions({
           Revoke
         </ActionButton>
       )}
+      <ActionButton href={`/dashboard/admin/kyc?user=${user.id}`} tone="primary">
+        <ShieldCheck size={16} /> KYC &amp; saved details
+      </ActionButton>
       <ActionButton href={`/dashboard/admin/users/${user.id}/tokens`} tone="primary">
         Tokens
       </ActionButton>

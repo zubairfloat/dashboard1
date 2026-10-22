@@ -113,3 +113,13 @@ Details are stored once in `kyc_bank_supplements`, linked one-to-one to the orig
 After saving, the form reports success and the shared KYC status refresh clears the reminder. Optional details can be included with this one-time completion; later edits require a separate supported workflow.
 
 Validation: `node --test tests/kyc-notice.cjs tests/kyc-legacy-form.cjs tests/kyc-banks.cjs tests/kyc-optional.cjs`. `tests/kyc-legacy-bank.sql` is for an isolated test database only; it creates synthetic historical fixtures and rolls back. It passed against local Postgres/PGlite with simulated Supabase schemas, covering eligibility, cross-user reads/inserts, anonymous access, reviewer reads, duplicate/update rejection and preservation of the approved identity record. TypeScript and targeted ESLint passed. Real browser submission against a deployed environment is still required after migration.
+
+Production deployment update (2026-10-22): confirmed `kyc_bank_supplements` was missing on production and applied `kyc_legacy_bank_supplements` to project `naesbrhwrledjapwshux`. The migration reloads the PostgREST schema cache. Existing KYC rows were not updated. UAT remains a separate deployment target.
+
+## Read-only saved details
+
+Verified users can view saved bank details, crypto wallet and residential address on their KYC page. The shared display supports original submissions and legacy supplements, expands bank information by default, and labels missing/optional information explicitly. It has no edit controls. Identity approval is distinguished from bank/wallet ownership verification.
+
+The admin user list has a `KYC & saved details` link for each user. Authorized reviewers can view that user's submission history (newest first), filter by status, and inspect the same saved details and completion indicators. The general review list also supports all statuses. Users without submissions have an explicit empty state. Existing reviewer authorization and database RLS remain in force; this UI change does not grant ordinary admins sensitive-data access automatically.
+
+This update requires only application deployment, assuming the existing KYC migrations (including legacy supplements) are installed. No additional migration is required.

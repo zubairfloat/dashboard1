@@ -15,6 +15,7 @@ function render(submission) {
       if (name === '@/lib/format') return { formatDateTime: () => 'Approved earlier' };
       if (name === './kyc-picker') return { KycPicker: ({ label }) => React.createElement('label', null, label) };
       if (name === './kyc-optional-details') return { KycOptionalDetails: () => React.createElement('div', null, 'Optional wallet and address') };
+      if (name === '../kyc-saved-details') return { default: () => null, __esModule: true };
       if (name === '../skeleton') return { Skeleton: () => null };
       if (name === 'next/link') return ({ children, ...props }) => React.createElement('a', props, children);
       if (name === '@/lib/kyc-bank-logos') return { getKycBankLogo: () => undefined };
