@@ -376,9 +376,54 @@ revoke all on function kyc_private.validate_optional_details() from public, anon
 create or replace trigger kyc_validate_optional before insert or update on public.kyc_submissions
 for each row execute function kyc_private.validate_optional_details();
 
+-- Source: 20261021213355_kyc_legacy_bank_supplements.sql (repeatable UAT repair)
+-- Requires all previous KYC migrations. Approved identity records remain immutable.
+create table if not exists public.kyc_bank_supplements (
+  submission_id uuid primary key references public.kyc_submissions(id) on delete cascade,
+  country_code text not null check (country_code ~ '^[A-Z]{2}$'),
+  bank_name text not null,
+  iban text not null,
+  account_holder_name text not null,
+  crypto_wallet jsonb,
+  residential_address jsonb,
+  created_at timestamptz not null default now(),
+  consent_at timestamptz not null default now()
+);
+alter table public.kyc_bank_supplements enable row level security;
+revoke all on public.kyc_bank_supplements from public, anon, authenticated;
+grant select on public.kyc_bank_supplements to authenticated;
+grant insert (submission_id, country_code, bank_name, iban, account_holder_name, crypto_wallet, residential_address)
+  on public.kyc_bank_supplements to authenticated;
+
+drop policy if exists kyc_supplement_read on public.kyc_bank_supplements;
+create policy kyc_supplement_read on public.kyc_bank_supplements for select to authenticated using (
+  exists (select 1 from public.kyc_submissions s where s.id=submission_id
+    and (s.user_id=(select auth.uid()) or (select kyc_private.is_reviewer())))
+);
+drop policy if exists kyc_supplement_insert on public.kyc_bank_supplements;
+create policy kyc_supplement_insert on public.kyc_bank_supplements for insert to authenticated with check (
+  exists (select 1 from public.kyc_submissions s where s.id=submission_id
+    and s.user_id=(select auth.uid()) and s.status='verified'
+    and (coalesce(btrim(s.bank_name),'')='' or coalesce(btrim(s.iban),'')='' or coalesce(btrim(s.account_holder_name),'')=''))
+);
+-- Reuse exactly the same bank, holder and optional-field validation as new KYC.
+create or replace trigger kyc_supplement_bank before insert on public.kyc_bank_supplements
+for each row execute function kyc_private.validate_bank_details();
+create or replace trigger kyc_supplement_holder before insert on public.kyc_bank_supplements
+for each row execute function kyc_private.validate_account_holder_name();
+create or replace trigger kyc_supplement_optional before insert on public.kyc_bank_supplements
+for each row execute function kyc_private.validate_optional_details();
+-- No UPDATE/DELETE grants or policies: a supplement can only be supplied once.
 notify pgrst, 'reload schema';
+
 commit;
 
 -- Verify installation:
 select column_name, data_type from information_schema.columns
 where table_schema='public' and table_name='kyc_submissions' order by ordinal_position;
+
+select
+  to_regclass('public.kyc_bank_supplements') is not null as bank_supplements_exists,
+  to_regclass('kyc_private.reviewers') is not null as reviewers_exists,
+  to_regclass('kyc_private.email_jobs') is not null as notification_queue_exists,
+  exists (select 1 from storage.buckets where id='kyc-documents' and public=false) as private_documents_bucket_exists;

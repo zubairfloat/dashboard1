@@ -104,7 +104,7 @@ Deployment update (2026-10-17): applied bank details, account holder name and op
 
 ## Completing bank details after legacy identity approval
 
-Apply `supabase/migrations/20261021213355_kyc_legacy_bank_supplements.sql` to **each target environment before deploying the application update**. It requires all six earlier KYC migrations. For a fresh or repaired UAT installation, run the existing setup/repair script first, then this migration once. This migration has not been applied to UAT or production by this change.
+Apply `supabase/migrations/20261021213355_kyc_legacy_bank_supplements.sql` to **each target environment before deploying the application update**. It requires all six earlier KYC migrations. For an existing or partial UAT installation, run the entire `supabase/setup/uat-kyc-repair.sql` in the UAT SQL Editor: it now includes the legacy supplement table and can be rerun. For a fresh installation using `uat-kyc.sql`, run that setup first, then this migration once. The repair preserves existing submissions and reviewer membership; it does not copy production users or enroll new reviewers. UAT must be updated separately; connected production access does not grant UAT access.
 
 Verified users missing a bank name, IBAN or account holder name now see a persistent dashboard reminder and a bank-only form at `/dashboard/kyc`. Bank country, bank, IBAN and account holder name are required; wallet/address details remain optional and use existing validation and disclaimers. Saving does not upload documents, create another identity submission, reset verification, alter review timestamps or send a new identity-review email. Pending users stay under review; rejected users still correct and resubmit documents.
 
@@ -123,3 +123,21 @@ Verified users can view saved bank details, crypto wallet and residential addres
 The admin user list has a `KYC & saved details` link for each user. Authorized reviewers can view that user's submission history (newest first), filter by status, and inspect the same saved details and completion indicators. The general review list also supports all statuses. Users without submissions have an explicit empty state. Existing reviewer authorization and database RLS remain in force; this UI change does not grant ordinary admins sensitive-data access automatically.
 
 This update requires only application deployment, assuming the existing KYC migrations (including legacy supplements) are installed. No additional migration is required.
+
+### Add skipped optional details after verification
+
+Apply `supabase/migrations/20261101134231_kyc_optional_additions.sql` to each environment **before deploying this application update**. For UAT, run it after `supabase/setup/uat-kyc-repair.sql`. This migration has not been applied remotely as part of this change.
+
+Verified users with complete bank details can add each missing optional section separately from the saved-details panel. A confirmation explains that saving is permanent. `kyc_optional_additions` stores one immutable row per submission and section; existing original/supplement values cannot be replaced. Owner-only INSERT policies check verification, required bank fields, and absence of that section in both existing sources. The primary key rejects duplicate/concurrent saves, validation uses the existing optional-details trigger, and clients have no UPDATE or DELETE permissions. Owners and authorized KYC reviewers can read these rows. Identity status and the original submission stay unchanged; administrators see later additions in the shared saved-details view.
+
+Verification: `node --test tests/kyc-optional-additions.cjs tests/kyc-saved-details.cjs tests/kyc-legacy-form.cjs tests/kyc-optional.cjs`. Run `tests/kyc-optional-additions.sql` only in an isolated test database with all migrations installed; it tests owner/reviewer access, original and legacy values, duplicate writes, malformed inputs, and immutability.
+
+Production update (2026-11-01): applied `kyc_optional_additions` to `naesbrhwrledjapwshux` after confirming the missing table caused KYC query failures in the local app connected to production. RLS and owner/reviewer policies are installed; existing KYC records were not modified. UAT still requires this migration separately.
+
+### Account verification dashboard UI
+
+The Identity & Verification page now renders a compact status banner and four responsive cards for identity, bank, wallet and address. Saved IBANs are displayed in full to the account owner and authorized KYC reviewers, with selectable, wrapping text. The existing required-data submission form remains available for new/rejected users and verified legacy users missing bank details.
+
+`KycOptionalAdditions` reuses `KycOptionalDetails` inside the native-dialog `KycDetailsModal`, with a separate review step, Go Back and Confirm & Save actions. Entered fields survive failed requests, a synchronous in-flight guard prevents duplicate submissions, and successful saves update the cards immediately and refresh shared account state. Native modal behavior handles background inertness and keyboard focus containment; the component restores focus/scroll state on close and focuses the success notice after saving. Existing server permissions and one-time restrictions are unchanged. No new database migration is required for this UI redesign.
+
+Focused checks include `tests/kyc-optional-flow.cjs` (validation, review, retry, independent saves and rapid duplicate confirmation), existing form-state tests, optional-action visibility and read-only rendering. Browser-based responsive/focus verification remains pending because the headless Chrome execution was not approved.

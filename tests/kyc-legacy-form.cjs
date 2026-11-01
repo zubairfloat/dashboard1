@@ -15,7 +15,7 @@ function render(submission) {
       if (name === '@/lib/format') return { formatDateTime: () => 'Approved earlier' };
       if (name === './kyc-picker') return { KycPicker: ({ label }) => React.createElement('label', null, label) };
       if (name === './kyc-optional-details') return { KycOptionalDetails: () => React.createElement('div', null, 'Optional wallet and address') };
-      if (name === '../kyc-saved-details') return { default: () => null, __esModule: true };
+      if (name === './kyc-optional-additions') return { default: () => null, __esModule: true };
       if (name === '../skeleton') return { Skeleton: () => null };
       if (name === 'next/link') return ({ children, ...props }) => React.createElement('a', props, children);
       if (name === '@/lib/kyc-bank-logos') return { getKycBankLogo: () => undefined };
@@ -29,7 +29,7 @@ function render(submission) {
 const verified = { id: 'legacy', status: 'verified', country: 'Pakistan', document_type: 'national_id', created_at: '2026-01-01' };
 test('legacy verified form only collects bank and optional details', () => {
  const html = render(verified);
- assert.match(html, /KYC Verified/);
+ assert.match(html, /Identity Verified/);
  assert.match(html, /Complete your bank details/);
  assert.match(html, /Save bank details/);
  assert.match(html, /Optional wallet and address/);
@@ -37,11 +37,19 @@ test('legacy verified form only collects bank and optional details', () => {
 });
 test('saved supplement hides the completion form', () => {
  const html = render({ ...verified, bank_supplement: { bank_name: 'Bank' } });
- assert.match(html, /KYC Verified/);
+ assert.match(html, /Identity Verified/);
  assert.doesNotMatch(html, /Save bank details|<form/);
 });
 test('rejected and pending users keep their existing flows', () => {
  assert.match(render({ ...verified, status: 'rejected' }), /Resubmit your documents/);
  assert.match(render({ ...verified, status: 'rejected' }), /Continue to documents/);
  assert.doesNotMatch(render({ ...verified, status: 'pending' }), /Save bank details|<form/);
+});
+
+test('new users retain required submission flow and the dashboard header', () => {
+ const html = render(null);
+ assert.match(html, /Identity &amp; Verification/);
+ assert.match(html, /Start your verification/);
+ assert.match(html, /Verify your identity/);
+ assert.match(html, /Continue to documents/);
 });

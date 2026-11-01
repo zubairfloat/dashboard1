@@ -33,3 +33,17 @@ test('missing legacy fields are visible and stored text is escaped',()=>{
  assert.doesNotMatch(html,/<script>/);
  assert.match(render({status:'verified'}),/Bank: Not provided/);
 });
+
+test('later optional additions display to users and reviewers without editing controls',()=>{
+ const html=render({...base, optional_additions:[{section:'crypto',crypto_wallet:{cryptocurrency:'USDT',network:'tron',address:'TJRabPrwbZy45sbavfcjinPJC18kjpRTv8'}},{section:'address',residential_address:{line1:'Later Street',city:'London',country:'GB'}}]});
+ for(const text of ['Crypto: Provided','Address: Provided','TRON (TRC20)','Later Street']) assert.ok(html.includes(text),text);
+ assert.doesNotMatch(html,/<input|<textarea|<select|<form/);
+});
+
+test('all four cards appear for new and pending users, with full saved bank details',()=>{
+ for(const data of [null,{...base,status:'pending'}]) {
+  const html=render(data);
+  for(const title of ['Identity Verification','Bank Details','Crypto Wallet','Residential Address']) assert.ok(html.includes(title), title);
+  if (data) assert.match(html,/PK36SCBL0000001123456702/);
+ }
+});
