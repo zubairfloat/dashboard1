@@ -27,6 +27,7 @@ export function needsKycBankDetails(submission: KycSubmission | null | undefined
   return !submission.bank_name?.trim() || !submission.iban?.trim() || !submission.account_holder_name?.trim();
 }
 export type KycSubmission = {
+  optional_additions?: { section: "crypto" | "address"; crypto_wallet: CryptoWallet | null; residential_address: ResidentialAddress | null }[];
   bank_supplement?: KycBankSupplement | null;
   id: string; user_id: string; full_name: string; country: string;
   country_code: string | null;
@@ -52,4 +53,11 @@ export async function validateKycFile(file: File): Promise<string> {
   const pdf = [37, 80, 68, 70, 45].every((value, i) => bytes[i] === value);
   if (!(expected === "image/jpeg" ? jpeg : expected === "image/png" ? png : pdf)) throw new Error("The file contents do not match its format. Upload a valid JPG, JPEG, PNG or PDF.");
   return expected;
+}
+
+export function getKycOptionalDetails(submission: KycSubmission) {
+  return {
+    wallet: submission.bank_supplement?.crypto_wallet ?? submission.crypto_wallet ?? submission.optional_additions?.find(row => row.section === "crypto")?.crypto_wallet ?? null,
+    address: submission.bank_supplement?.residential_address ?? submission.residential_address ?? submission.optional_additions?.find(row => row.section === "address")?.residential_address ?? null,
+  };
 }

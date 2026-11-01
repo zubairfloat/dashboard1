@@ -8,7 +8,7 @@ export default async function KycReviewPage({ searchParams }: { searchParams: Pr
   if (request && !/^[0-9a-f-]{36}$/i.test(request)) notFound();
   if (user && !/^[0-9a-f-]{36}$/i.test(user)) notFound();
   const supabase = await createServerSupabase();
-  let query = supabase.from("kyc_submissions").select("*, bank_supplement:kyc_bank_supplements(*)", { count: "exact" });
+  let query = supabase.from("kyc_submissions").select("*, bank_supplement:kyc_bank_supplements(*), optional_additions:kyc_optional_additions(*)", { count: "exact" });
   query = request ? query.eq("id", request) : user ? query.eq("user_id", user) : query.eq("status", "pending");
   const { data, count, error } = await query.order("created_at", { ascending: !user }).limit(request ? 1 : 10);
   if (error) throw new Error("Unable to load KYC reviews.");

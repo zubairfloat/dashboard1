@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { KYC_COUNTRIES } from "@/lib/kyc-countries";
 import { CRYPTO_NETWORKS, emptyAddress, type CryptoWallet, type ResidentialAddress } from "@/lib/kyc-optional";
 
@@ -11,20 +12,23 @@ const walletGuides: Record<string, { format: string; example: string; length?: n
   bitcoin: { format: "Length depends on the address type. Legacy addresses start with 1 or 3 (26–35 characters); common bc1q addresses have 42 or 62 characters, and bc1p addresses have 62 characters.", example: "1BoatSLRHtKNngkdXEeobR76b53LETtpyT" },
 };
 const sectionClass = "rounded-2xl border border-white/10 bg-white/[0.03] p-4 sm:p-5";
-export function KycOptionalDetails({ enabled, onEnabled, wallet, onWallet, address, onAddress, error }: {
+function OptionalSection({ expanded, title, children }: { expanded: boolean; title: string; children: ReactNode }) {
+  return expanded ? <section className={sectionClass}><h4 className="font-medium text-blue-100">{title}</h4>{children}</section>
+    : <details className={sectionClass}><summary className="cursor-pointer font-medium text-blue-100">{title}</summary>{children}</details>;
+}
+export function KycOptionalDetails({ enabled, onEnabled, wallet, onWallet, address, onAddress, error, section }: {
   enabled: boolean; onEnabled: (value: boolean) => void;
   wallet: CryptoWallet; onWallet: (value: CryptoWallet) => void;
   address: ResidentialAddress; onAddress: (value: ResidentialAddress) => void;
-  error: string | null;
+  error: string | null; section?: "crypto" | "address";
 }) {
   const guide = walletGuides[wallet.network];
   const addressLength = wallet.address.trim().length;
   return <div className="space-y-4">
-    <details className={sectionClass}>
-      <summary className="cursor-pointer font-medium text-blue-100">Crypto Wallet Details (Optional)</summary>
+    {section !== "address" && <OptionalSection expanded={Boolean(section)} title="Crypto Wallet Details (Optional)">
       <div className="mt-4 space-y-4">
-        <label className="flex items-center gap-3 text-sm text-blue-100"><input type="checkbox" checked={enabled} onChange={event => onEnabled(event.target.checked)} aria-controls="kyc-wallet-fields" />I would like to add my crypto wallet details.</label>
-        {enabled && <div id="kyc-wallet-fields" className="grid gap-4 sm:grid-cols-2">
+        {!section && <label className="flex items-center gap-3 text-sm text-blue-100"><input type="checkbox" checked={enabled} onChange={event => onEnabled(event.target.checked)} aria-controls="kyc-wallet-fields" />I would like to add my crypto wallet details.</label>}
+        {(enabled || section === "crypto") && <div id="kyc-wallet-fields" className="grid gap-4 sm:grid-cols-2">
           <label className="text-sm text-blue-100">Cryptocurrency<select value={wallet.cryptocurrency} onChange={event => onWallet({ cryptocurrency: event.target.value, network: "", address: "" })} className={inputClass}><option value="">Select cryptocurrency</option>{["BTC", "ETH", "USDT"].map(value => <option key={value}>{value}</option>)}</select></label>
           <label className="text-sm text-blue-100">Blockchain Network<select value={wallet.network} onChange={event => onWallet({ ...wallet, network: event.target.value, address: "" })} className={inputClass}><option value="">Select network</option>{CRYPTO_NETWORKS.filter(network => network.currencies.includes(wallet.cryptocurrency)).map(network => <option key={network.value} value={network.value}>{network.label}</option>)}</select></label>
           <label className="text-sm text-blue-100 sm:col-span-2">Wallet Address<input value={wallet.address} onChange={event => onWallet({ ...wallet, address: event.target.value })} maxLength={128} spellCheck={false} autoCapitalize="none" autoComplete="off" placeholder={guide ? `e.g. ${guide.example}` : "Select a network, then enter your receiving address"} aria-describedby="kyc-wallet-help kyc-wallet-format kyc-wallet-guide kyc-wallet-disclaimer" className={`${inputClass} font-mono`} /></label>
@@ -40,9 +44,8 @@ export function KycOptionalDetails({ enabled, onEnabled, wallet, onWallet, addre
         </div>}
         <p id="kyc-wallet-help" className="text-xs leading-5 text-blue-100/60">Crypto wallet details are optional. Please ensure the wallet address and selected network are correct.</p>
       </div>
-    </details>
-    <details className={sectionClass}>
-      <summary className="cursor-pointer font-medium text-blue-100">Residential Address (Optional)</summary>
+    </OptionalSection>}
+    {section !== "crypto" && <OptionalSection expanded={Boolean(section)} title="Residential Address (Optional)">
       <p className="mt-4 text-xs leading-5 text-blue-100/60">Leave this section blank to skip it. If provided, enter Address Line 1, City and Country. State / Province and Postal / ZIP Code can be left blank where not applicable.</p>
       <div className="mt-4 grid gap-4 sm:grid-cols-2">
         {([
@@ -52,7 +55,7 @@ export function KycOptionalDetails({ enabled, onEnabled, wallet, onWallet, addre
         <label className="text-sm text-blue-100">Country<select value={address.country} onChange={event => onAddress({ ...address, country: event.target.value })} autoComplete="country" className={inputClass}><option value="">Select country</option>{KYC_COUNTRIES.map(country => <option key={country.code} value={country.code}>{country.name}</option>)}</select></label>
       </div>
       <button type="button" onClick={() => onAddress({ ...emptyAddress })} className="mt-4 text-sm text-sky-300 underline">Clear residential address</button>
-    </details>
+    </OptionalSection>}
     {error && <p role="alert" className="text-sm text-rose-300">{error}</p>}
   </div>;
 }

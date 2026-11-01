@@ -23,7 +23,7 @@ export default function KycReviewContent({ initialItems, initialCount, requestId
     async function load() {
       const { data: permitted, error: permissionError } = await supabase.rpc("is_kyc_reviewer");
       if (permissionError || !permitted) throw new Error("Access is limited to authorized KYC reviewers.");
-      let query = supabase.from("kyc_submissions").select("*, bank_supplement:kyc_bank_supplements(*)", { count: "exact" });
+      let query = supabase.from("kyc_submissions").select("*, bank_supplement:kyc_bank_supplements(*), optional_additions:kyc_optional_additions(*)", { count: "exact" });
       if (requestId) query = query.eq("id", requestId);
       else {
         if (userId) query = query.eq("user_id", userId);
@@ -93,7 +93,7 @@ function ReviewCard({ item, onReviewed }: { item: KycSubmission; onReviewed: () 
   return <article className="space-y-4 workspace-panel rounded-3xl border border-white/10 bg-white/5 p-6">
     <div><h2 className="text-xl font-semibold">{item.full_name}</h2><p className="mt-1 text-sm text-blue-100/70">{item.country} · {document.label} · {formatDateTime(item.created_at)}</p><p className="mt-1 break-all text-xs text-blue-100/50">Account: {item.user_id}</p><p className="mt-3 text-sm font-medium text-sky-200">{item.status === "pending" ? "Documents submitted — Under admin review" : item.status === "verified" ? "Approved — KYC Verified" : "Rejected — Action Required"}</p></div>
     {item.bank_supplement && <p className="text-sm text-sky-200">Bank details added {formatDateTime(item.bank_supplement.created_at)} · Bank country: {item.bank_supplement.country_code}. Identity approval is unchanged; bank ownership has not been verified.</p>}
-    <KycSavedDetails submission={item} />
+    <KycSavedDetails submission={item} adminView />
     <button disabled={busy} onClick={() => photos.length ? setPhotos([]) : void viewPhotos()} className="rounded-xl border border-white/15 px-4 py-2 disabled:opacity-40">{photos.length ? "Hide documents" : busy ? "Loading…" : "View documents"}</button>
     {loadingDocuments && <DocumentsSkeleton count={requiredCount} />}
     {photos.length > 0 && <div className="grid gap-4 md:grid-cols-2">{photos.map(file => <figure key={file.url}>

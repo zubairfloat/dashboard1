@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import KycSavedDetails from "../kyc-saved-details";
+import KycOptionalAdditions from "./kyc-optional-additions";
 import { KycOptionalDetails } from "./kyc-optional-details";
 import { emptyAddress, normalizeAddress, validateOptionalDetails, type CryptoWallet } from "@/lib/kyc-optional";
 import { KycPicker } from "./kyc-picker";
@@ -18,7 +18,7 @@ import { notifyKyc } from "@/lib/email/notifyKyc";
 import { useKycStatus } from "@/hooks/use-kyc-status";
 
 const inputClass = "mt-2 block w-full rounded-xl border border-white/15 bg-[#0c162a] p-3.5 text-white transition placeholder:text-blue-100/35 focus:border-sky-300/60 focus:outline-none focus:ring-2 focus:ring-sky-300/15 disabled:opacity-50";
-const labels = { pending: "Documents submitted · Under admin review", verified: "KYC Verified", rejected: "Rejected / Action Required" };
+const labels = { pending: "Documents submitted · Under admin review", verified: "Identity Verified", rejected: "Rejected / Action Required" };
 
 export default function PersonalKycForm() {
   const { submission: remoteSubmission, ready, error } = useKycStatus();
@@ -111,29 +111,30 @@ export default function PersonalKycForm() {
     } finally { setBusy(false); }
   }
 
-  return <div className="mx-auto max-w-4xl space-y-6">
+  return <div className="mx-auto max-w-5xl space-y-5">
     <header>
-      <p className="mb-2 text-sm text-sky-300">ACCOUNT SECURITY</p>
-      <h1 className="text-3xl font-bold text-white md:text-4xl">Identity verification</h1>
-      <p className="mt-3 text-blue-100/70">{submission?.status === "verified" ? "Your identity is verified. Keep your bank details complete without repeating identity verification." : "Choose your country and bank, enter your IBAN, then upload your identity documents for review."}</p>
+      <p className="mb-2 text-xs font-semibold tracking-widest text-sky-300">ACCOUNT SECURITY</p>
+      <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">Identity &amp; Verification</h1>
+      <p className="mt-2 text-sm leading-6 text-blue-100/75">Manage your verified information and optional account details.</p>
     </header>
-    <section className="workspace-panel rounded-3xl border border-white/10 bg-white/5 p-6" aria-busy={!ready}>
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <h2 className="flex items-center gap-3 text-xl font-semibold text-white"><ShieldCheck className="text-sky-300" /> Verification status</h2>
-        <button disabled={busy} onClick={() => window.dispatchEvent(new Event("kyc-updated"))} className="flex items-center gap-2 rounded-xl border border-white/15 px-4 py-2 text-blue-100 disabled:opacity-50"><RefreshCw size={16} /> Refresh</button>
+    <section className="rounded-2xl border border-white/10 bg-[#142035] p-5" aria-busy={!ready && !error} aria-label="Verification status">
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div className="flex min-w-0 flex-1 gap-3" aria-live="polite">
+          <ShieldCheck size={23} aria-hidden="true" className={`mt-0.5 shrink-0 ${submission?.status === "verified" ? "text-emerald-300" : "text-sky-300"}`} />
+          <div className="min-w-0">
+            {!ready && !error ? <div role="status" aria-label="Loading verification" className="space-y-2"><Skeleton className="h-5 w-32" /><Skeleton className="h-4 w-48 max-w-full" /></div> : <>
+              <h2 className="font-semibold text-white">{error ? "Verification status unavailable" : submission ? labels[submission.status] : "Start your verification"}</h2>
+              <p className="mt-1 text-sm leading-6 text-blue-100/75">{error ? "Please refresh to try again." : submission?.status === "verified" ? needsKycBankDetails(submission) ? "Your identity is verified. Add your required bank details below." : "Your required verification is complete." : submission?.status === "pending" ? "Your documents are awaiting review. No further upload is needed." : submission?.status === "rejected" ? "Review the feedback below and resubmit your documents." : "Complete your bank details and submit your identity documents."}</p>
+              {submission?.status === "verified" && (submission.reviewed_at || submission.created_at) && <p className="mt-1 text-xs text-blue-100/65">{submission.reviewed_at ? "Approved" : "Submitted"} {formatDateTime(submission.reviewed_at || submission.created_at)}</p>}
+            </>}
+          </div>
+        </div>
+        <button disabled={busy} onClick={() => window.dispatchEvent(new Event("kyc-updated"))} className="flex min-h-10 items-center gap-2 rounded-xl border border-white/15 px-3 py-2 text-sm text-blue-100 hover:bg-white/5 focus-visible:outline-2 focus-visible:outline-cyan-200 disabled:opacity-50"><RefreshCw size={15} aria-hidden="true" />Refresh</button>
       </div>
-      <div aria-live="polite" className="mt-5 text-blue-100">
-        {!ready ? <div role="status" aria-label="Loading verification" className="space-y-3"><Skeleton className="h-8 w-32" /><Skeleton className="h-4 w-64 max-w-full" /></div> : <>
-          <span className={`inline-block rounded-full px-4 py-2 text-sm ${submission?.status === "verified" ? "bg-emerald-400/10 text-emerald-200" : "bg-amber-400/10 text-amber-200"}`}>{submission ? labels[submission.status] : "KYC Pending"}</span>
-          {submission && <p className="mt-3 text-sm text-blue-100/70">{submission.country} · {getKycDocument(submission.document_type).label} · Submitted {formatDateTime(submission.created_at)}</p>}
-          {submission?.status === "pending" && <p className="mt-4">Your documents are awaiting review. No further upload is needed.</p>}
-          {submission?.status === "verified" && <p className="mt-4">An administrator has approved your identity verification.</p>}
-          {submission?.status === "rejected" && <div className="mt-4"><p className="font-medium">Reviewer feedback</p><p className="mt-1 whitespace-pre-wrap">{submission.rejection_reason}</p><p className="mt-3 text-sm">Address this feedback and submit new documents below.</p></div>}
-        </>}
-      </div>
-      <p className="mt-5 border-t border-white/10 pt-4 text-sm text-blue-100/60">Identity verification is separate from account approval.</p>
+      {submission?.status === "rejected" && <div className="mt-3 rounded-xl border border-amber-300/15 bg-amber-300/5 p-3 text-sm text-amber-100"><p className="font-medium">Reviewer feedback</p><p className="mt-1 whitespace-pre-wrap">{submission.rejection_reason}</p></div>}
+      <p className="mt-3 text-xs text-blue-100/65">Identity verification is separate from account approval.</p>
     </section>
-    {ready && submission?.status === "verified" && <div className="workspace-panel rounded-3xl border border-white/10 bg-white/5 p-6 md:p-8"><KycSavedDetails submission={submission} /></div>}
+    {ready && !error && <KycOptionalAdditions key={submission?.id || "new"} submission={submission} />}
     {(message || error) && <p role="status" className="rounded-xl border border-sky-300/20 bg-sky-300/10 p-4 text-blue-100">{message || error}</p>}
     {canSubmit && <form onSubmit={submit} className="workspace-panel rounded-3xl border border-white/10 bg-white/5 p-6 md:p-8">
       <h2 className="text-xl font-semibold text-white">{completingBank ? "Complete your bank details" : submission ? "Resubmit your documents" : "Verify your identity"}</h2>
